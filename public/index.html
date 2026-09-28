@@ -260,13 +260,39 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .drop-zone-lbl{font-size:13.5px;color:var(--muted);pointer-events:none}
 .drop-zone-lbl strong{color:var(--text)}
-.ss-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ss-thumbs{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.ss-group-row{display:flex;flex-wrap:wrap;gap:6px}
+.ss-group-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.ss-group-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ss-group-name strong{color:var(--text-2);text-transform:none;letter-spacing:0;font-size:12px;font-weight:600}
+.ss-group-toggle{font-size:10.5px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif}
 .ss-thumb-wrap{position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:2.5px solid var(--border);transition:border-color .15s,opacity .15s;flex-shrink:0}
 .ss-thumb-wrap:not(.selected){opacity:0.35}
 .ss-thumb-wrap.selected{border-color:var(--accent)}
 .ss-thumb{height:80px;width:auto;max-width:56px;object-fit:cover;display:block}
 .ss-thumb-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;text-align:center;padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .ss-controls{display:none;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+/* Metadata Optimizer */
+.meta-fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:640px){.meta-fields-grid{grid-template-columns:1fr}}
+.meta-label{font-size:11.5px;font-weight:600;color:var(--text-2);display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.meta-ct{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted);font-weight:400}
+.meta-ct.warn{color:var(--danger)}
+.meta-input{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;box-sizing:border-box}
+textarea.meta-input{resize:vertical;min-height:90px}
+.meta-input:focus{border-color:var(--accent)}
+.meta-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.coverage-tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+.coverage-tbl th{background:var(--surface-2);padding:6px 10px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;text-align:center}
+.coverage-tbl th:first-child{text-align:left}
+.coverage-tbl td{padding:7px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;text-align:center}
+.coverage-tbl td:first-child{text-align:left}
+.coverage-tbl tr:last-child td{border-bottom:none}
+.coverage-tbl tr:hover td{background:var(--surface-2)}
+.cov-yes{color:var(--success);font-size:14px}
+.cov-no{color:var(--muted);font-size:12px}
+.cov-kw{font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:600}
 .ai-sub{margin-top:20px;padding-top:18px;border-top:1px solid var(--border-soft)}
 .ai-sub-title{font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;margin:0 0 4px}
 .ai-sub-desc{font-size:12.5px;color:var(--muted);margin:0 0 12px}
@@ -392,7 +418,7 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 
     <div class="r-section" id="chart-rank-section" style="display:none">
       <p class="r-h">📊 Category Chart Position</p>
-      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">App Store category chart rankings sourced from the Apple Marketing Tools RSS API — no key required.</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">App Store category chart rankings sourced from the iTunes RSS API — no key required.</p>
       <div id="chart-rank-content"></div>
     </div>
 
@@ -475,11 +501,49 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
             <option value="brief">Creative Brief for New Screenshots</option>
             <option value="compare">Compare with Competitor Strategy</option>
           </select>
-          <button class="llm-btn primary" id="ss-analyze-btn" onclick="analyzeScreenshots()">Analyze Screenshots</button>
+          <button class="llm-btn primary" id="ss-analyze-btn" onclick="analyzeScreenshots(false)">Analyze Selected</button>
+          <button class="llm-btn secondary" id="ss-per-app-btn" onclick="analyzeScreenshots(true)">Each app separately</button>
           <button class="llm-btn secondary" onclick="clearScreenshots()">Clear</button>
         </div>
         <div class="llm-output-wrap" id="ss-output-wrap" style="margin-top:10px">
           <div class="llm-output" id="ss-output"></div>
+        </div>
+      </div>
+
+      <!-- Metadata Optimizer -->
+      <div class="ai-sub" id="meta-optimizer" style="display:none">
+        <p class="ai-sub-title">Metadata Optimizer</p>
+        <p class="ai-sub-desc">Paste or edit your metadata, then check how well your tracked keywords are covered — and get AI suggestions to fill the gaps.</p>
+        <div class="meta-fields-grid">
+          <div>
+            <div class="meta-label">Title <span class="meta-ct" id="meta-title-ct">0 chars</span></div>
+            <input class="meta-input" id="meta-title" type="text" placeholder="App title…" spellcheck="false">
+          </div>
+          <div>
+            <div class="meta-label">Subtitle / Short Description <span class="meta-ct" id="meta-sub-ct">0 chars</span></div>
+            <input class="meta-input" id="meta-sub" type="text" placeholder="iOS subtitle ≤30 · Android short desc ≤80…" spellcheck="false">
+          </div>
+          <div>
+            <div class="meta-label">iOS Keyword Field <span class="meta-ct" id="meta-kw-ct">0 chars</span></div>
+            <input class="meta-input" id="meta-kw-field" type="text" placeholder="keyword1,keyword2,… (≤100 chars, no spaces after commas)" spellcheck="false">
+          </div>
+          <div>
+            <div class="meta-label">Developer Name / Brand <span class="meta-ct" id="meta-brand-ct">0 chars</span></div>
+            <input class="meta-input" id="meta-brand" type="text" placeholder="Developer or brand name (included in coverage check)…">
+          </div>
+          <div style="grid-column:1/-1">
+            <div class="meta-label">Description <span class="meta-ct" id="meta-desc-ct">0 chars</span></div>
+            <textarea class="meta-input" id="meta-desc" rows="5" placeholder="Full app description…"></textarea>
+          </div>
+        </div>
+        <div class="meta-actions">
+          <button class="llm-btn secondary" onclick="prefillMetadataFromApp()">↙ Prefill from your app</button>
+          <button class="llm-btn secondary" onclick="checkMetadataCoverage()">📊 Check keyword coverage</button>
+          <button class="llm-btn primary" id="meta-ai-btn" onclick="optimizeMetadataWithAI()">✨ Optimize with AI</button>
+        </div>
+        <div id="meta-coverage-result" style="margin-top:12px"></div>
+        <div class="llm-output-wrap" id="meta-output-wrap" style="margin-top:10px">
+          <div class="llm-output" id="meta-output"></div>
         </div>
       </div>
     </div>
@@ -650,7 +714,7 @@ function extractKeywords(apps, limit=20) {
 // ── Keyword ranking ──
 async function fetchKeywordRanking(keyword, apps) {
   const ranks = apps.map(()=>({pos:null,error:false}));
-  let iosTop=[], androidTop=[];
+  let iosTop=[], androidTop=[], iosTotalResults=0;
   const hasIOS = apps.some(a=>a.store==='ios'&&a.trackId);
   const hasAndroid = apps.some(a=>a.store==='android'&&a.packageId);
 
@@ -661,7 +725,8 @@ async function fetchKeywordRanking(keyword, apps) {
         if (!res.ok) return;
         const data = await res.json();
         const results = data.results||[];
-        iosTop = results.slice(0,10).map((r,i)=>({name:r.trackName,trackId:String(r.trackId),icon:r.artworkUrl60||r.artworkUrl100,pos:i+1}));
+        iosTotalResults=results.length;
+        iosTop = results.slice(0,10).map((r,i)=>({name:r.trackName,trackId:String(r.trackId),icon:r.artworkUrl60||r.artworkUrl100,pos:i+1,ratingCount:r.userRatingCount??0,rating:r.averageUserRating??0}));
         const ids = results.map(r=>String(r.trackId));
         apps.forEach((a,i)=>{ if(a.store==='ios'&&a.trackId){const p=ids.indexOf(a.trackId);ranks[i].pos=p>=0?p+1:null;} });
       } catch(_) { apps.forEach((a,i)=>{ if(a.store==='ios') ranks[i].error=true; }); }
@@ -705,7 +770,7 @@ async function fetchKeywordRanking(keyword, apps) {
     })() : Promise.resolve()
   ]);
 
-  return {keyword,ranks,iosTop,androidTop};
+  return {keyword,ranks,iosTop,androidTop,iosTotalResults};
 }
 
 // ── Render ──
@@ -723,39 +788,48 @@ function renderAll(apps) {
   renderReviews(apps);
   document.getElementById('android-note').style.display=apps.some(a=>a.store==='android')?'block':'none';
   document.getElementById('load-store-ss-btn').style.display=apps.some(a=>a.screenshots?.length)?'':'none';
+  document.getElementById('meta-optimizer').style.display='block';
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 // ── iOS Category Chart Ranks ──
+// Uses itunes.apple.com RSS (stable) instead of rss.applemarketingtools.com (unreliable/504s)
+function itunesRssUrl(chartSlug, country, limit, genreId) {
+  const base=`https://itunes.apple.com/${country}/rss/${chartSlug}/limit=${limit}`;
+  return genreId ? `${base}/genre=${genreId}/json` : `${base}/json`;
+}
+function itunesRssIds(data) {
+  return (data?.feed?.entry??[]).map(e=>e?.id?.attributes?.['im:id']).filter(Boolean);
+}
+
 async function fetchIosChartPos(app) {
   if(app.store!=='ios'||!app.trackId) return null;
-  const base=`https://rss.applemarketingtools.com/api/v2/${COUNTRY}/apps`;
-  const chartType=(app.priceVal??0)>0?'top-paid':'top-free';
+  const chartSlug=(app.priceVal??0)>0?'toppaidapplications':'topfreeapplications';
   const urls=[];
-  if(app.genreId) urls.push(`${base}/${chartType}/200/${app.genreId}/apps.json`);
-  urls.push(`${base}/${chartType}/200/apps.json`);
+  if(app.genreId) urls.push({url:itunesRssUrl(chartSlug,COUNTRY,200,app.genreId),isCategory:true});
+  urls.push({url:itunesRssUrl(chartSlug,COUNTRY,200,null),isCategory:false});
   let found=null;
-  for(const url of urls){
+  for(const {url,isCategory} of urls){
     try{
       const res=await withTimeout(fetch(url),10000);
       if(!res.ok) continue;
       const data=await res.json();
-      const results=data.feed?.results??[];
-      const pos=results.findIndex(r=>r.id===app.trackId);
-      if(pos>=0){found={pos:pos+1,total:results.length,chartType,isCategory:url.includes(`/${app.genreId}/`)};break;}
-      else if(!found) found={pos:null,total:results.length,chartType,isCategory:url.includes(`/${app.genreId}/`)};
+      const ids=itunesRssIds(data);
+      const pos=ids.indexOf(app.trackId);
+      if(pos>=0){found={pos:pos+1,total:ids.length,chartType:chartSlug==='toppaidapplications'?'top-paid':'top-free',isCategory};break;}
+      else if(!found) found={pos:null,total:ids.length,chartType:chartSlug==='toppaidapplications'?'top-paid':'top-free',isCategory};
     }catch(_){continue;}
   }
   // Also check top-grossing
   try{
-    const gUrl=app.genreId?`${base}/top-grossing/200/${app.genreId}/apps.json`:`${base}/top-grossing/200/apps.json`;
+    const gUrl=itunesRssUrl('topgrossingapplications',COUNTRY,200,app.genreId||null);
     const res=await withTimeout(fetch(gUrl),10000);
     if(res.ok){
       const data=await res.json();
-      const results=data.feed?.results??[];
-      const pos=results.findIndex(r=>r.id===app.trackId);
-      if(pos>=0&&(!found?.pos||pos+1<found.pos)) found={pos:pos+1,total:results.length,chartType:'top-grossing',isCategory:!!app.genreId};
+      const ids=itunesRssIds(data);
+      const pos=ids.indexOf(app.trackId);
+      if(pos>=0&&(!found?.pos||pos+1<found.pos)) found={pos:pos+1,total:ids.length,chartType:'top-grossing',isCategory:!!app.genreId};
     }
   }catch(_){}
   return found?{...found,category:app.category}:null;
@@ -803,7 +877,7 @@ async function renderChartRanks(apps) {
   tbl.appendChild(tbody); wrap.appendChild(tbl); content.appendChild(wrap);
   const note=document.createElement('p');
   note.style.cssText='font-size:12px;color:var(--muted);margin:8px 0 0';
-  note.textContent=`Source: Apple Marketing Tools RSS · Category chart · Top 200 · ${COUNTRY.toUpperCase()}`;
+  note.textContent=`Source: iTunes RSS · Category chart · Top 200 · ${COUNTRY.toUpperCase()}`;
   content.appendChild(note);
 }
 
@@ -908,9 +982,16 @@ async function fetchASAVolume(keywords, adamId) {
   } catch(_) { return {}; }
 }
 
+function autocompleteScore(hints, kw) {
+  const kl=kw.toLowerCase();
+  const exactIdx=hints.indexOf(kl);
+  const prefixIdx=hints.findIndex(h=>h.startsWith(kl+' ')||h===kl);
+  const idx=exactIdx>=0?exactIdx:prefixIdx;
+  if(idx<0) return 1;
+  return idx===0?5:idx===1?4:idx<=3?3:2;
+}
+
 async function fetchAutoCompleteVolume(keywords, country) {
-  // Uses App Store autocomplete hints as a volume proxy (no auth needed).
-  // Score: keyword at position 0 in hints = 5 (very popular), not found = 1.
   const map={};
   await Promise.allSettled(keywords.map(async kw=>{
     try {
@@ -919,20 +1000,24 @@ async function fetchAutoCompleteVolume(keywords, country) {
       if(!r.ok) return;
       const data=await r.json();
       const hints=(data.hints||[]).map(h=>(h.term||'').toLowerCase());
-      const idx=hints.indexOf(kw.toLowerCase());
-      map[kw.toLowerCase()]=idx===0?5:idx===1?4:idx===2||idx===3?3:idx>3?2:1;
+      map[kw.toLowerCase()]=autocompleteScore(hints,kw);
     } catch(_) {}
   }));
   return map;
 }
 
-async function fetchKeywordVolume(keywords, iosApp) {
-  if(!iosApp) return {map:{},source:null};
-  const asaMap=await fetchASAVolume(keywords,iosApp.trackId);
-  if(Object.keys(asaMap).length>0) return {map:asaMap,source:'asa'};
-  const acMap=await fetchAutoCompleteVolume(keywords,COUNTRY);
-  if(Object.keys(acMap).length>0) return {map:acMap,source:'autocomplete'};
-  return {map:{},source:null};
+async function fetchKeywordVolume(keywords, apps) {
+  const iosApp=apps?.find(a=>a.store==='ios'&&a.trackId);
+  let iosMap={}, iosSource=null;
+  if(iosApp){
+    const asaMap=await fetchASAVolume(keywords,iosApp.trackId);
+    if(Object.keys(asaMap).length>0){iosMap=asaMap;iosSource='asa';}
+    else{
+      const acMap=await fetchAutoCompleteVolume(keywords,COUNTRY);
+      if(Object.keys(acMap).length>0){iosMap=acMap;iosSource='autocomplete';}
+    }
+  }
+  return {iosMap,iosSource,androidMap:{},androidSource:null};
 }
 
 async function analyzeKeywords() {
@@ -943,13 +1028,12 @@ async function analyzeKeywords() {
   const kwSec=document.getElementById('kw-results-section');
   document.getElementById('kw-cards').innerHTML=`<p style="color:var(--muted);font-size:13px;padding:10px 0">Checking ${selected.length} keyword${selected.length>1?'s':''}…</p>`;
   kwSec.style.display='block';
-  const iosApp=lastApps.find(a=>a.store==='ios'&&a.trackId);
-  const [kwResults,{map:volumeMap,source:volumeSource}]=await Promise.all([
+  const [kwResults,volData]=await Promise.all([
     Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps))),
-    fetchKeywordVolume(selected,iosApp||null),
+    fetchKeywordVolume(selected,lastApps),
   ]);
   lastKwResults=kwResults;
-  renderKeywordCards(lastApps,kwResults,volumeMap,volumeSource);
+  renderKeywordCards(lastApps,kwResults,volData);
   renderKeywordGaps(lastApps,kwResults);
   renderKeywordDensity(lastApps,kwResults);
   btn.disabled=false; btn.textContent='Analyze Keywords ▶';
@@ -958,15 +1042,36 @@ async function analyzeKeywords() {
 
 function volDots(v,source) {
   const n=Math.min(5,Math.max(1,Math.round(v)));
-  const src=source==='asa'?'Apple Search Ads':'App Store autocomplete (estimate)';
-  return `<span class="vol-dots" title="Search popularity ${n}/5 · ${src}">${'●'.repeat(n)}${'○'.repeat(5-n)}</span>`;
+  const src=source==='asa'?'Apple Search Ads':source==='autocomplete'?'Autocomplete estimate':'Estimate';
+  const lbl=n>=5?'Very High':n>=4?'High':n>=3?'Medium':n>=2?'Low':'Very Low';
+  return `<span class="vol-dots" title="Search volume ~${lbl} (${n}/5) · ${src}">${'●'.repeat(n)}${'○'.repeat(5-n)}</span><span style="color:var(--muted);font-size:10px;display:block">${lbl}</span>`;
 }
 
-function renderKeywordCards(apps, kwResults, volumeMap={}, volumeSource=null) {
+function computeDifficulty(top10, totalResults) {
+  if(!top10||!top10.length) return null;
+  const n=top10.length;
+  const avgReviews=top10.reduce((s,a)=>s+(a.ratingCount||0),0)/n;
+  const avgRating=top10.reduce((s,a)=>s+(a.rating||0),0)/n;
+  // Log scale: saturates at ~100k avg reviews (50pts), linear result count (30pts), rating 3-5 scale (20pts)
+  const reviewScore=Math.min(Math.log10(avgReviews+1)/5,1)*50;
+  const totalScore=Math.min((totalResults||0)/200,1)*30;
+  const ratingScore=Math.max(0,Math.min((avgRating-3)/2,1))*20;
+  return Math.round(reviewScore+totalScore+ratingScore);
+}
+function diffCell(score) {
+  if(score==null) return `<td class="kw-rank-cell center"><span class="null-val">—</span></td>`;
+  const label=score<=25?'Easy':score<=50?'Medium':score<=75?'Hard':'Very Hard';
+  const color=score<=25?'var(--success)':score<=50?'#f59e0b':score<=75?'#f97316':'#ef4444';
+  return `<td class="kw-rank-cell center"><span style="font-size:11px;font-weight:700;color:${color}">${label}</span><span style="color:var(--muted);font-size:10px;display:block">${score}/100</span></td>`;
+}
+
+function renderKeywordCards(apps, kwResults, volData={}) {
+  const {iosMap={},iosSource=null,androidMap={},androidSource=null}=volData;
   const sec=document.getElementById('kw-results-section'), container=document.getElementById('kw-cards');
   container.innerHTML='';
   const hasIOS=apps.some(a=>a.store==='ios'), hasAndroid=apps.some(a=>a.store==='android');
-  const hasVolume=hasIOS&&Object.keys(volumeMap).length>0;
+  const hasIosVol=hasIOS&&Object.keys(iosMap).length>0;
+  const hasAndVol=hasAndroid&&Object.keys(androidMap).length>0;
   const trackedIos=new Set(apps.filter(a=>a.store==='ios'&&a.trackId).map(a=>a.trackId));
   const trackedAnd=new Set(apps.filter(a=>a.store==='android'&&a.packageId).map(a=>a.packageId));
 
@@ -975,11 +1080,13 @@ function renderKeywordCards(apps, kwResults, volumeMap={}, volumeSource=null) {
 
   // Header
   let headCols='<th>Keyword</th>';
-  if(hasVolume){
-    const volTitle=volumeSource==='asa'?'Apple Search Ads popularity (1–5)':'App Store autocomplete estimate (1–5)';
-    const volLabel=volumeSource==='asa'?'Vol 🍎':'Vol 🍎~';
-    headCols+=`<th class="center" title="${volTitle}">${volLabel}</th>`;
+  if(hasIosVol){
+    const lbl=iosSource==='asa'?'Vol 🍎':'Vol 🍎~';
+    const tip=iosSource==='asa'?'Apple Search Ads popularity (1–5)':'App Store autocomplete estimate (1–5)';
+    headCols+=`<th class="center" title="${tip}">${lbl}</th>`;
   }
+  if(hasAndVol) headCols+=`<th class="center" title="Play Store autocomplete estimate (1–5)">Vol 🤖~</th>`;
+  if(hasIOS) headCols+='<th class="center" title="Computed from top-10 avg review count, rating, and result count. Higher = harder to rank.">Difficulty</th>';
   apps.forEach(a=>{ headCols+=`<th class="center">${esc(a.name.length>12?a.name.slice(0,10)+'…':a.name)} ${a.store==='ios'?'🍎':'🤖'}</th>`; });
   if(hasIOS) headCols+='<th>Top 🍎 Apps</th>';
   if(hasAndroid) headCols+='<th>Top 🤖 Apps</th>';
@@ -999,13 +1106,18 @@ function renderKeywordCards(apps, kwResults, volumeMap={}, volumeSource=null) {
     return `<a class="kw-ico-link${isMine?' mine':''}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(title)}">${iconEl}</a>`;
   }).join('');
 
-  for (const {keyword,ranks,iosTop,androidTop} of kwResults) {
+  for (const {keyword,ranks,iosTop,androidTop,iosTotalResults} of kwResults) {
     const tr=document.createElement('tr');
     let cells=`<td class="kw-kw">${esc(keyword)}</td>`;
-    if(hasVolume){
-      const vol=volumeMap[keyword.toLowerCase()];
-      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,volumeSource):'<span class="null-val">—</span>'}</td>`;
+    if(hasIosVol){
+      const vol=iosMap[keyword.toLowerCase()];
+      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,iosSource):'<span class="null-val">—</span>'}</td>`;
     }
+    if(hasAndVol){
+      const vol=androidMap[keyword.toLowerCase()];
+      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,androidSource):'<span class="null-val">—</span>'}</td>`;
+    }
+    if(hasIOS) cells+=diffCell(computeDifficulty(iosTop,iosTotalResults));
     apps.forEach((_,i)=>{
       const r=ranks[i];
       if(!r||r.error){cells+='<td class="kw-rank-cell"><span class="null-val">err</span></td>';return;}
@@ -1528,25 +1640,68 @@ function renderSsThumbs() {
   const controls = document.getElementById('ss-controls');
   const dropLbl = document.getElementById('drop-lbl');
   thumbsEl.innerHTML = '';
-  ssItems.forEach(item => {
+  if (!ssItems.length) { controls.style.display='none'; dropLbl.style.display='block'; return; }
+  dropLbl.style.display = 'none'; controls.style.display = 'flex';
+
+  // Group by appIndex (null = manual uploads)
+  const groups = new Map();
+  ssItems.forEach((item, idx) => {
+    const key = item.appIndex != null ? item.appIndex : 'manual';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({item, idx});
+  });
+
+  const makeThumb = ({item}) => {
     const wrap = document.createElement('div');
     wrap.className = 'ss-thumb-wrap' + (item.selected ? ' selected' : '');
     const img = document.createElement('img');
     img.className = 'ss-thumb'; img.src = item.dataUrl;
     wrap.appendChild(img);
     if (item.appName) {
-      const lbl = document.createElement('div');
-      lbl.className = 'ss-thumb-label'; lbl.textContent = item.appName;
+      const lbl = document.createElement('div'); lbl.className = 'ss-thumb-label'; lbl.textContent = item.appName;
       wrap.appendChild(lbl);
     }
-    wrap.addEventListener('click', () => {
-      item.selected = !item.selected;
-      wrap.classList.toggle('selected', item.selected);
+    wrap.addEventListener('click', () => { item.selected = !item.selected; wrap.classList.toggle('selected', item.selected); });
+    return wrap;
+  };
+
+  // Manual uploads first
+  if (groups.has('manual')) {
+    const group = document.createElement('div');
+    const hdr = document.createElement('div'); hdr.className = 'ss-group-hdr';
+    hdr.innerHTML = '<span class="ss-group-name">Manual uploads</span>';
+    const toggleBtn = document.createElement('button'); toggleBtn.className = 'ss-group-toggle'; toggleBtn.textContent = 'select all';
+    const entries = groups.get('manual');
+    toggleBtn.addEventListener('click', () => {
+      const allOn = entries.every(e => e.item.selected);
+      entries.forEach(e => { e.item.selected = !allOn; });
+      renderSsThumbs();
     });
-    thumbsEl.appendChild(wrap);
+    hdr.appendChild(toggleBtn); group.appendChild(hdr);
+    const row = document.createElement('div'); row.className = 'ss-group-row';
+    entries.forEach(e => row.appendChild(makeThumb(e)));
+    group.appendChild(row); thumbsEl.appendChild(group);
+  }
+
+  // App groups
+  (lastApps || []).forEach((app, appIdx) => {
+    if (!groups.has(appIdx)) return;
+    const entries = groups.get(appIdx);
+    const group = document.createElement('div');
+    const hdr = document.createElement('div'); hdr.className = 'ss-group-hdr';
+    const tag = appIdx === 0 ? '⭐ Your App' : `📱 Comp. ${appIdx}`;
+    hdr.innerHTML = `<span class="ss-group-name">${tag} · <strong>${esc(app.name)}</strong></span>`;
+    const toggleBtn = document.createElement('button'); toggleBtn.className = 'ss-group-toggle'; toggleBtn.textContent = 'select all';
+    toggleBtn.addEventListener('click', () => {
+      const allOn = entries.every(e => e.item.selected);
+      entries.forEach(e => { e.item.selected = !allOn; });
+      renderSsThumbs();
+    });
+    hdr.appendChild(toggleBtn); group.appendChild(hdr);
+    const row = document.createElement('div'); row.className = 'ss-group-row';
+    entries.forEach(e => row.appendChild(makeThumb(e)));
+    group.appendChild(row); thumbsEl.appendChild(group);
   });
-  controls.style.display = ssItems.length ? 'flex' : 'none';
-  dropLbl.style.display = ssItems.length ? 'none' : 'block';
 }
 
 (function setupScreenshotDrop(){
@@ -1603,18 +1758,18 @@ async function loadStoreScreenshots() {
   btn.disabled = true; btn.textContent = '⏳ Loading…';
   ssItems = ssItems.filter(s => s.store === null); // keep manual uploads
   const tasks = [];
-  for (const app of lastApps) {
-    if (!app.screenshots?.length) continue;
-    for (const url of app.screenshots.slice(0, 3)) {
+  lastApps.forEach((app, appIdx) => {
+    if (!app.screenshots?.length) return;
+    app.screenshots.slice(0, 3).forEach(url => {
       tasks.push((async () => {
         try {
           const dataUrl = await imgUrlToBase64(url);
           const label = app.name.length > 14 ? app.name.slice(0, 12) + '…' : app.name;
-          ssItems.push({ dataUrl, appName: label, store: app.store, selected: true });
+          ssItems.push({ dataUrl, appName: label, store: app.store, appIndex: appIdx, selected: true });
         } catch (e) { console.warn('Screenshot load failed:', e.message); }
       })());
-    }
-  }
+    });
+  });
   await Promise.all(tasks);
   renderSsThumbs();
   const n = ssItems.filter(s => s.store !== null).length;
@@ -1623,26 +1778,215 @@ async function loadStoreScreenshots() {
   if (n > 0) showToast(`${n} screenshot${n !== 1 ? 's' : ''} loaded — click to toggle selection`);
 }
 
-async function analyzeScreenshots() {
+async function analyzeScreenshots(perApp = false) {
   const selected = ssItems.filter(s => s.selected);
   if (!selected.length) { alert('Select at least one screenshot (click a thumbnail to toggle).'); return; }
   const url = document.getElementById('llm-url').value.trim().replace(/\/$/, '');
   const model = document.getElementById('llm-model-sel').value;
   if (!model) { alert('Connect to LM Studio first.'); return; }
   const mode = document.getElementById('ss-mode-sel').value;
-  const prompts = {
-    ux: 'You are an expert ASO conversion specialist. Analyze these App Store/Google Play screenshots. Evaluate: 1) Visual clarity and hierarchy, 2) How well the value proposition is communicated, 3) Feature messaging effectiveness, 4) Emotional appeal, 5) Call-to-action clarity, 6) What to improve for higher conversion. Be specific and actionable.',
-    brief: 'Based on these screenshots, write a detailed creative brief for a new, higher-converting screenshot set. Include: recommended number of screens, headline copy for each screen, visual style direction, the single key message per screen, and what to stop doing.',
-    compare: `You are an ASO strategist. Compare these app screenshots against typical top-grossing competitors in this category. Identify: what this app communicates clearly vs competitors, where it looks weaker, what positioning angle is being taken, and specific recommendations to stand out.${lastApps ? ` App context: ${lastApps[0]?.name} in ${lastApps[0]?.category || 'its category'}.` : ''}`
+
+  const makePrompt = (base, appName, role) => {
+    const ctx = appName ? ` These screenshots are from "${appName}"${role ? ' ('+role+')' : ''}.` : '';
+    return base + ctx;
   };
+  const basePrompts = {
+    ux: 'You are an expert ASO conversion specialist. Analyze these App Store/Google Play screenshots. Evaluate: 1) Visual clarity and hierarchy, 2) Value proposition communication, 3) Feature messaging effectiveness, 4) Emotional appeal, 5) Call-to-action clarity, 6) Specific improvements for higher conversion.',
+    brief: 'Based on these screenshots, write a detailed creative brief for a new, higher-converting screenshot set. Include: recommended number of screens, headline copy for each screen, visual style direction, the single key message per screen, and what to stop doing.',
+    compare: `You are an ASO strategist. Compare these app screenshots against top-grossing competitors in this category. Identify: what is communicated clearly vs competitors, where it looks weaker, the positioning angle, and specific recommendations to stand out.${lastApps ? ` Category: ${lastApps[0]?.category || 'unknown'}.` : ''}`
+  };
+
   const btn = document.getElementById('ss-analyze-btn');
+  const perAppBtn = document.getElementById('ss-per-app-btn');
   const wrap = document.getElementById('ss-output-wrap'), out = document.getElementById('ss-output');
-  btn.disabled = true; wrap.style.display = 'block'; out.textContent = `Analyzing ${selected.length} screenshot${selected.length !== 1 ? 's' : ''}…`;
+  btn.disabled = true; perAppBtn.disabled = true;
+  wrap.style.display = 'block';
+
+  // Group by appIndex if per-app mode
+  if (perApp) {
+    const groups = new Map();
+    selected.forEach(item => {
+      const key = item.appIndex != null ? item.appIndex : 'manual';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    if (groups.size <= 1) perApp = false; // fall through to combined
+    else {
+      out.innerHTML = '';
+      for (const [key, items] of groups) {
+        const appName = items[0].appName || (key === 'manual' ? 'Manual uploads' : `App ${parseInt(key)+1}`);
+        const role = key === 0 || key === '0' ? 'your app' : 'competitor';
+        const sec = document.createElement('div'); sec.style.marginBottom = '18px';
+        const hdr = document.createElement('div');
+        hdr.style.cssText = 'font-family:\'Outfit\',sans-serif;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-soft)';
+        hdr.textContent = (key === 0 || key === '0') ? `⭐ Your App · ${appName}` : `📱 Competitor · ${appName}`;
+        const outDiv = document.createElement('div'); outDiv.className = 'llm-output'; outDiv.textContent = 'Analyzing…';
+        sec.append(hdr, outDiv); out.appendChild(sec);
+        const images = items.map(s => ({ type: 'image_url', image_url: { url: s.dataUrl } }));
+        const content = [...images, { type: 'text', text: makePrompt(basePrompts[mode], appName, role) }];
+        await streamLLM(url, model, null, outDiv, () => {}, { vision: true, content });
+      }
+      btn.disabled = false; perAppBtn.disabled = false;
+      return;
+    }
+  }
+
+  // Combined analysis
+  const appNames = [...new Set(selected.filter(s => s.appName).map(s => s.appName))].join(', ');
+  out.textContent = `Analyzing ${selected.length} screenshot${selected.length !== 1 ? 's' : ''}…`;
   try {
     const images = selected.map(s => ({ type: 'image_url', image_url: { url: s.dataUrl } }));
-    const content = [...images, { type: 'text', text: prompts[mode] }];
-    await streamLLM(url, model, null, out, () => { btn.disabled = false; }, { vision: true, content });
-  } catch (e) { out.textContent = `Error: ${e.message}`; btn.disabled = false; }
+    const content = [...images, { type: 'text', text: makePrompt(basePrompts[mode], appNames || null, null) }];
+    await streamLLM(url, model, null, out, () => { btn.disabled = false; perAppBtn.disabled = false; }, { vision: true, content });
+  } catch (e) { out.textContent = `Error: ${e.message}`; btn.disabled = false; perAppBtn.disabled = false; }
+}
+
+// ── Metadata Optimizer ──
+function updateMetaCharCounts() {
+  const defs = [
+    { id:'meta-title',    ct:'meta-title-ct',  limit:30,   label:'chars (iOS≤30/Android≤50)' },
+    { id:'meta-sub',      ct:'meta-sub-ct',    limit:30,   label:'chars (iOS≤30)' },
+    { id:'meta-kw-field', ct:'meta-kw-ct',     limit:100,  label:'chars (≤100)' },
+    { id:'meta-brand',    ct:'meta-brand-ct',  limit:null, label:'chars' },
+    { id:'meta-desc',     ct:'meta-desc-ct',   limit:4000, label:'chars' },
+  ];
+  defs.forEach(({ id, ct, limit, label }) => {
+    const el = document.getElementById(id), ctEl = document.getElementById(ct);
+    if (!el || !ctEl) return;
+    const n = el.value.length;
+    ctEl.textContent = `${n} ${label}`;
+    ctEl.className = 'meta-ct' + (limit && n > limit ? ' warn' : '');
+  });
+}
+['meta-title','meta-sub','meta-kw-field','meta-brand','meta-desc'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', updateMetaCharCounts);
+});
+
+function prefillMetadataFromApp() {
+  if (!lastApps?.length) { alert('Run analysis first.'); return; }
+  const a = lastApps[0];
+  document.getElementById('meta-title').value = a.name || '';
+  document.getElementById('meta-desc').value = a.description || '';
+  document.getElementById('meta-brand').value = a.dev || '';
+  updateMetaCharCounts();
+  checkMetadataCoverage();
+}
+
+function checkMetadataCoverage() {
+  const title = document.getElementById('meta-title').value.toLowerCase();
+  const sub   = document.getElementById('meta-sub').value.toLowerCase();
+  const kwF   = document.getElementById('meta-kw-field').value.toLowerCase();
+  const brand = document.getElementById('meta-brand').value.toLowerCase();
+  const desc  = document.getElementById('meta-desc').value.toLowerCase();
+  if (!title && !sub && !kwF && !desc) { alert('Enter some metadata first.'); return; }
+
+  const chipKws = [...document.querySelectorAll('#kw-chips .kw-chip')].map(c => c.dataset.kw);
+  const kws = chipKws.length ? chipKws : (lastApps ? extractKeywords(lastApps, 20) : []);
+  if (!kws.length) { alert('Run app analysis first to generate keywords to check.'); return; }
+
+  const countIn = (text, kw) => { let n=0,p=0; while((p=text.indexOf(kw,p))!==-1){n++;p+=kw.length;} return n; };
+
+  const rows = kws.map(kw => {
+    const k = kw.toLowerCase();
+    const inTitle = countIn(title, k) > 0;
+    const inSub   = countIn(sub, k)   > 0;
+    const inKwF   = countIn(kwF, k)   > 0;
+    const inDesc  = countIn(desc, k)  > 0;
+    const anywhere = inTitle || inSub || inKwF || inDesc;
+    const kwResult = lastKwResults?.find(r => r.keyword.toLowerCase() === k);
+    const yourRank = kwResult?.ranks[0];
+    return { kw, inTitle, inSub, inKwF, inDesc, anywhere, yourRank };
+  });
+
+  const covered = rows.filter(r => r.anywhere).length;
+  const pct = Math.round(covered / rows.length * 100);
+  const gc = pct >= 80 ? 'var(--success)' : pct >= 60 ? '#f59e0b' : 'var(--danger)';
+  const missing = rows.filter(r => !r.anywhere).map(r => `<strong>${esc(r.kw)}</strong>`).join(', ');
+
+  document.getElementById('meta-coverage-result').innerHTML = `
+    <div style="margin-bottom:8px;font-size:13px">
+      <strong style="color:${gc}">${pct}% keyword coverage</strong>
+      <span style="color:var(--muted);margin-left:6px">${covered}/${rows.length} keywords found in your metadata</span>
+    </div>
+    <div class="coverage-tbl-wrap">
+      <table class="coverage-tbl">
+        <thead><tr>
+          <th>Keyword</th><th title="Title">Title</th><th title="Subtitle/Short Desc">Sub</th>
+          <th title="iOS Keyword Field">KW Field</th><th title="Description">Desc</th><th>Your rank</th>
+        </tr></thead>
+        <tbody>${rows.map(r => `
+          <tr style="${!r.anywhere?'opacity:0.5':''}">
+            <td class="cov-kw">${esc(r.kw)}</td>
+            <td>${r.inTitle?'<span class="cov-yes">✓</span>':'<span class="cov-no">—</span>'}</td>
+            <td>${r.inSub  ?'<span class="cov-yes">✓</span>':'<span class="cov-no">—</span>'}</td>
+            <td>${r.inKwF  ?'<span class="cov-yes">✓</span>':'<span class="cov-no">—</span>'}</td>
+            <td>${r.inDesc ?'<span class="cov-yes">✓</span>':'<span class="cov-no">—</span>'}</td>
+            <td>${r.yourRank?.pos!=null?`<span class="kw-rank ${r.yourRank.pos<=3?'top3':r.yourRank.pos<=10?'top10':'top50'}">#${r.yourRank.pos}</span>`:'<span class="null-val">—</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${missing?`<p style="font-size:11.5px;color:var(--muted);margin:6px 0 0">Missing: ${missing}</p>`:'<p style="font-size:11.5px;color:var(--success);margin:6px 0 0">✓ All tracked keywords covered</p>'}
+  `;
+}
+
+async function optimizeMetadataWithAI() {
+  const title = document.getElementById('meta-title').value;
+  const sub   = document.getElementById('meta-sub').value;
+  const kwF   = document.getElementById('meta-kw-field').value;
+  const brand = document.getElementById('meta-brand').value;
+  const desc  = document.getElementById('meta-desc').value;
+  const url   = document.getElementById('llm-url').value.trim().replace(/\/$/,'');
+  const model = document.getElementById('llm-model-sel').value;
+  if (!model) { alert('Connect to LM Studio first.'); return; }
+
+  const chipKws = [...document.querySelectorAll('#kw-chips .kw-chip')].map(c => c.dataset.kw);
+  const kws = chipKws.length ? chipKws : (lastApps ? extractKeywords(lastApps, 20) : []);
+
+  let appCtx = '';
+  if (lastApps) {
+    const a = lastApps[0];
+    appCtx = `App: ${a.name} · Category: ${a.category||'unknown'} · Developer: ${a.dev||'unknown'}\n`;
+  }
+  let kwRankCtx = '';
+  if (lastKwResults?.length) {
+    kwRankCtx = '\nCurrent keyword rankings:\n' + lastKwResults.map(r => {
+      const pos = r.ranks[0]?.pos;
+      return `- "${r.keyword}": ${pos?`#${pos}`:'not ranked'}`;
+    }).join('\n');
+  }
+  const metaText = [
+    title  ? `Title: ${title}` : '',
+    sub    ? `Subtitle / Short Description: ${sub}` : '',
+    kwF    ? `iOS Keyword Field: ${kwF}` : '',
+    brand  ? `Developer / Brand: ${brand}` : '',
+    desc   ? `\nDescription:\n${desc}` : '',
+  ].filter(Boolean).join('\n');
+
+  const prompt = `You are a senior ASO metadata specialist. Optimize the app metadata below to maximize keyword coverage and store conversion.
+
+${appCtx}
+## Target keywords
+${kws.length ? kws.map(k=>`- ${k}`).join('\n') : '(extract from description context)'}
+${kwRankCtx}
+
+## Current metadata
+${metaText}
+
+## Deliverables
+1. **Coverage audit** — list which target keywords are missing from each metadata field
+2. **Optimized Title** (iOS ≤30 chars, Android ≤50 chars) — show exact char count
+3. **Optimized Subtitle** (iOS ≤30 chars) / **Short Description** (Android ≤80 chars) — show char count
+4. **Optimized iOS Keyword Field** (≤100 chars, comma-separated, no spaces after commas, no words repeated from title/subtitle) — show char count
+5. **Rewritten description opening** — first 3 lines before the fold, hook first, keyword-rich
+6. **Priority keyword gaps** — top 5 keywords not yet covered and exactly where to add them
+
+Show exact character counts next to every field suggestion.`;
+
+  const btn  = document.getElementById('meta-ai-btn');
+  const wrap = document.getElementById('meta-output-wrap'), out = document.getElementById('meta-output');
+  btn.disabled = true; wrap.style.display = 'block'; out.textContent = 'Optimizing metadata…';
+  await streamLLM(url, model, prompt, out, () => { btn.disabled = false; });
 }
 
 // ── Shared streaming helper ──
