@@ -176,6 +176,7 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .kw-tbl tr:hover td{background:var(--surface-2)}
 .kw-kw{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;white-space:nowrap}
 .kw-rank-cell{text-align:center}
+.vol-dots{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;color:var(--accent)}
 .kw-icons{display:flex;flex-wrap:nowrap;gap:3px;align-items:center}
 .kw-ico-link{display:inline-flex;flex-shrink:0;border-radius:6px;overflow:hidden;transition:transform .12s,box-shadow .12s}
 .kw-ico-link:hover{transform:scale(1.25);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:1;position:relative}
@@ -233,6 +234,43 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .llm-output-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;min-height:80px;display:none}
 .llm-output{font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap;word-break:break-word}
 
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:#f1f5f9;font-size:13.5px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Reviews */
+.review-app-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.review-app-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;margin:0 0 6px}
+.review-load-btn{font-size:12.5px;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;transition:opacity .15s}
+.review-load-btn:disabled{opacity:.45;cursor:default}
+.review-actions{display:none;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.open-in-btn{font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;padding:5px 11px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text-2);cursor:pointer;transition:border-color .15s,color .15s;display:flex;align-items:center;gap:4px}
+.open-in-btn:hover{border-color:var(--accent);color:var(--accent)}
+.review-list{margin-top:10px;display:flex;flex-direction:column;gap:7px}
+.review-item{padding:9px 11px;background:var(--surface-2);border-radius:8px}
+.review-header{display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap}
+.review-stars{color:#f59e0b;font-size:11.5px;letter-spacing:-.5px;flex-shrink:0}
+.review-title{font-size:12.5px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.review-date{font-size:10.5px;color:var(--muted);flex-shrink:0}
+.review-body{font-size:12.5px;line-height:1.55;color:var(--text-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* Screenshot drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;transition:border-color .2s,background .2s;position:relative;cursor:pointer}
+.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-mid)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone-lbl{font-size:13.5px;color:var(--muted);pointer-events:none}
+.drop-zone-lbl strong{color:var(--text)}
+.ss-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ss-thumb-wrap{position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:2.5px solid var(--border);transition:border-color .15s,opacity .15s;flex-shrink:0}
+.ss-thumb-wrap:not(.selected){opacity:0.35}
+.ss-thumb-wrap.selected{border-color:var(--accent)}
+.ss-thumb{height:80px;width:auto;max-width:56px;object-fit:cover;display:block}
+.ss-thumb-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:9px;text-align:center;padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.ss-controls{display:none;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.ai-sub{margin-top:20px;padding-top:18px;border-top:1px solid var(--border-soft)}
+.ai-sub-title{font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;margin:0 0 4px}
+.ai-sub-desc{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+
 /* App picker */
 .app-picker{position:relative;flex:1;min-width:0}
 .picker-input{width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);outline:none;padding:0}
@@ -265,6 +303,7 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 </style>
 </head>
 <body>
+<div class="toast" id="toast"></div>
 <div class="wrap">
   <header class="hdr">
     <div class="hdr-logo">
@@ -351,10 +390,22 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
       <p class="note" id="android-note" style="display:none">ℹ️ Google Play data from the public store page. Version, size, last-updated not always available.</p>
     </div>
 
+    <div class="r-section" id="chart-rank-section" style="display:none">
+      <p class="r-h">📊 Category Chart Position</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">App Store category chart rankings sourced from the Apple Marketing Tools RSS API — no key required.</p>
+      <div id="chart-rank-content"></div>
+    </div>
+
     <div class="r-section" id="health-section" style="display:none">
       <p class="r-h">ASO Health Score</p>
       <p style="font-size:13px;color:var(--muted);margin:0 0 14px">0–100 score across rating quality, social proof, keyword coverage, update freshness, and localization reach.</p>
       <div class="health-grid" id="health-cards"></div>
+    </div>
+
+    <div class="r-section" id="reviews-section" style="display:none">
+      <p class="r-h">App Reviews</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Recent App Store reviews (iOS). Load reviews then use AI to surface themes, pain points, and listing insights.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px" id="reviews-grid"></div>
     </div>
 
     <div class="r-section kw-selector" id="kw-selector-section" style="display:none">
@@ -394,17 +445,42 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
       <div class="llm-status" id="llm-status"></div>
       <div class="llm-model-row" id="llm-model-row">
         <select class="llm-model-sel" id="llm-model-sel"></select>
-        <select class="llm-model-sel" id="llm-mode-sel" style="flex:none;width:auto;min-width:180px">
+        <select class="llm-model-sel" id="llm-mode-sel" style="flex:none;width:auto;min-width:200px">
           <option value="competitive">Competitive Analysis</option>
           <option value="keywords">Keyword Strategy</option>
-          <option value="description">Rewrite My Description</option>
-          <option value="metadata">Metadata Optimization</option>
+          <option value="metadata_pkg">📦 Full Metadata Package</option>
+          <option value="description">Rewrite Description</option>
           <option value="positioning">Positioning &amp; Differentiation</option>
+          <option value="localization">Localization Opportunities</option>
         </select>
         <button class="llm-btn primary" id="llm-analyze-btn" onclick="analyzeWithLLM()">Get AI Analysis</button>
       </div>
       <div class="llm-output-wrap" id="llm-output-wrap">
         <div class="llm-output" id="llm-output"></div>
+      </div>
+
+      <!-- Screenshot Analysis -->
+      <div class="ai-sub">
+        <p class="ai-sub-title">Screenshot Analysis</p>
+        <p class="ai-sub-desc">Load screenshots directly from your analyzed apps, or drop your own. Click thumbnails to toggle selection. Requires a vision-capable model (LLaVA, Qwen-VL, Gemma 3, etc.).</p>
+        <button class="llm-btn secondary" id="load-store-ss-btn" onclick="loadStoreScreenshots()" style="display:none;margin-bottom:10px">📱 Load from analyzed apps</button>
+        <div class="drop-zone" id="screenshot-drop">
+          <input type="file" accept="image/*" multiple id="screenshot-input">
+          <div class="drop-zone-lbl" id="drop-lbl"><strong>Drop screenshots here</strong> or click to browse<br><span style="font-size:12px;margin-top:4px;display:block">PNG · JPG · multiple files OK</span></div>
+        </div>
+        <div class="ss-thumbs" id="ss-thumbs"></div>
+        <div class="ss-controls" id="ss-controls">
+          <select class="llm-model-sel" id="ss-mode-sel" style="flex:none;width:auto;min-width:200px">
+            <option value="ux">UX &amp; Conversion Critique</option>
+            <option value="brief">Creative Brief for New Screenshots</option>
+            <option value="compare">Compare with Competitor Strategy</option>
+          </select>
+          <button class="llm-btn primary" id="ss-analyze-btn" onclick="analyzeScreenshots()">Analyze Screenshots</button>
+          <button class="llm-btn secondary" onclick="clearScreenshots()">Clear</button>
+        </div>
+        <div class="llm-output-wrap" id="ss-output-wrap" style="margin-top:10px">
+          <div class="llm-output" id="ss-output"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -485,11 +561,12 @@ async function fetchiOS(id) {
     icon:a.artworkUrl512||a.artworkUrl100,
     rating:a.averageUserRating??null, ratingCount:a.userRatingCount??null,
     price:a.price===0?'Free':`$${a.price.toFixed(2)}`, priceVal:a.price??0,
-    category:a.primaryGenreName??null, version:a.version??null,
+    category:a.primaryGenreName??null, genreId:a.primaryGenreId?String(a.primaryGenreId):null, version:a.version??null,
     updated:a.currentVersionReleaseDate?new Date(a.currentVersionReleaseDate):null,
     size:a.fileSizeBytes?fmtBytes(+a.fileSizeBytes):null,
     ageRating:a.contentAdvisoryRating??null, langs:a.languageCodesISO2A?.length??null,
-    description:a.description??null, url:a.trackViewUrl, partial:false
+    description:a.description??null, url:a.trackViewUrl, partial:false,
+    screenshots:(a.screenshotUrls||[]).slice(0,6)
   };
 }
 
@@ -504,6 +581,14 @@ async function fetchAndroid(id, onStatus) {
   } catch(e) { throw new Error(`Google Play fetch failed: ${e.message}`); }
 }
 function parsePlayHtml(html, id) {
+  // Extract screenshot URLs (wide-format =wN-hN means screenshot, not icon)
+  const screenshots = [];
+  const ssRe = /"(https:\/\/play-lh\.googleusercontent\.com\/[^"]{10,}=w\d+-h\d+[^"]*)"/g;
+  let ssm;
+  while ((ssm = ssRe.exec(html)) !== null && screenshots.length < 6) {
+    const url = ssm[1].replace(/=w\d+-h\d+(-[a-z]+)?$/, '=w400-h700');
+    if (!screenshots.includes(url)) screenshots.push(url);
+  }
   const doc = new DOMParser().parseFromString(html, 'text/html');
   let ld = null;
   doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
@@ -525,7 +610,8 @@ function parsePlayHtml(html, id) {
     price, priceVal:priceStr?parseFloat(priceStr):0, category:cat,
     description:ld?.description||og('og:description')||null,
     version:null, updated:null, size:null, ageRating:null, langs:null,
-    url:`https://play.google.com/store/apps/details?id=${id}`, partial:true
+    url:`https://play.google.com/store/apps/details?id=${id}`, partial:true,
+    screenshots
   };
 }
 
@@ -629,11 +715,96 @@ function renderAll(apps) {
   renderCharts(apps);
   renderTable(apps);
   if(typeof renderHealthScore==='function') renderHealthScore(apps,[]);
+  try{document.getElementById('chart-rank-section').style.display='none';}catch(_){}
+  try{document.getElementById('chart-rank-content').innerHTML='';}catch(_){}
+  try{document.getElementById('density-section').style.display='none';}catch(_){}
   document.getElementById('kw-results-section').style.display='none';
   if(typeof renderKeywordGaps==='function') renderKeywordGaps(apps,[]);
+  renderReviews(apps);
   document.getElementById('android-note').style.display=apps.some(a=>a.store==='android')?'block':'none';
+  document.getElementById('load-store-ss-btn').style.display=apps.some(a=>a.screenshots?.length)?'':'none';
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── iOS Category Chart Ranks ──
+async function fetchIosChartPos(app) {
+  if(app.store!=='ios'||!app.trackId) return null;
+  const base=`https://rss.applemarketingtools.com/api/v2/${COUNTRY}/apps`;
+  const chartType=(app.priceVal??0)>0?'top-paid':'top-free';
+  const urls=[];
+  if(app.genreId) urls.push(`${base}/${chartType}/200/${app.genreId}/apps.json`);
+  urls.push(`${base}/${chartType}/200/apps.json`);
+  let found=null;
+  for(const url of urls){
+    try{
+      const res=await withTimeout(fetch(url),10000);
+      if(!res.ok) continue;
+      const data=await res.json();
+      const results=data.feed?.results??[];
+      const pos=results.findIndex(r=>r.id===app.trackId);
+      if(pos>=0){found={pos:pos+1,total:results.length,chartType,isCategory:url.includes(`/${app.genreId}/`)};break;}
+      else if(!found) found={pos:null,total:results.length,chartType,isCategory:url.includes(`/${app.genreId}/`)};
+    }catch(_){continue;}
+  }
+  // Also check top-grossing
+  try{
+    const gUrl=app.genreId?`${base}/top-grossing/200/${app.genreId}/apps.json`:`${base}/top-grossing/200/apps.json`;
+    const res=await withTimeout(fetch(gUrl),10000);
+    if(res.ok){
+      const data=await res.json();
+      const results=data.feed?.results??[];
+      const pos=results.findIndex(r=>r.id===app.trackId);
+      if(pos>=0&&(!found?.pos||pos+1<found.pos)) found={pos:pos+1,total:results.length,chartType:'top-grossing',isCategory:!!app.genreId};
+    }
+  }catch(_){}
+  return found?{...found,category:app.category}:null;
+}
+
+async function renderChartRanks(apps) {
+  const sec=document.getElementById('chart-rank-section');
+  const content=document.getElementById('chart-rank-content');
+  const iosApps=apps.filter(a=>a.store==='ios'&&!a.error);
+  if(!iosApps.length){sec.style.display='none';return;}
+  content.innerHTML=`<p style="color:var(--muted);font-size:13px;padding:8px 0">Checking category charts…</p>`;
+  sec.style.display='block';
+  const results=await Promise.all(iosApps.map(a=>fetchIosChartPos(a)));
+  content.innerHTML='';
+  const chartLabels={'top-free':'🆓 Top Free','top-paid':'💰 Top Paid','top-grossing':'💵 Top Grossing'};
+  const chartTypes=[...new Set(results.filter(Boolean).map(r=>r.chartType))];
+  const wrap=document.createElement('div'); wrap.style.overflowX='auto';
+  const tbl=document.createElement('table'); tbl.className='cmp-table';
+  const thead=document.createElement('thead'),hr=document.createElement('tr');
+  hr.innerHTML='<th>Chart</th>'+iosApps.map((a,i)=>`<th style="${i===0?'background:var(--accent-mid);color:var(--accent)':''}">${esc(a.name.length>16?a.name.slice(0,14)+'…':a.name)}</th>`).join('');
+  thead.appendChild(hr); tbl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  if(!chartTypes.length){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="${iosApps.length+1}" style="color:var(--muted);font-size:13px">Could not load chart data</td>`;
+    tbody.appendChild(tr);
+  } else {
+    for(const ct of chartTypes){
+      const tr=document.createElement('tr');
+      let cells=`<td>${chartLabels[ct]||ct}</td>`;
+      results.forEach((r,i)=>{
+        const hl=i===0?'background:var(--accent-mid);':'';
+        if(!r||r.chartType!==ct){cells+=`<td style="${hl}"><span class="null-val">—</span></td>`;return;}
+        if(r.pos!=null){
+          const badge=r.pos<=10?'pill best':r.pos<=50?'pill':'';
+          const cat=r.isCategory&&r.category?`<span style="color:var(--muted);font-size:11px;display:block">${esc(r.category)}</span>`:'';
+          cells+=`<td style="${hl}">${badge?`<span class="${badge}">#${r.pos}</span>`:`#${r.pos}`}${cat}</td>`;
+        } else {
+          cells+=`<td style="${hl}"><span class="null-val">not in top ${r.total}</span></td>`;
+        }
+      });
+      tr.innerHTML=cells; tbody.appendChild(tr);
+    }
+  }
+  tbl.appendChild(tbody); wrap.appendChild(tbl); content.appendChild(wrap);
+  const note=document.createElement('p');
+  note.style.cssText='font-size:12px;color:var(--muted);margin:8px 0 0';
+  note.textContent=`Source: Apple Marketing Tools RSS · Category chart · Top 200 · ${COUNTRY.toUpperCase()}`;
+  content.appendChild(note);
 }
 
 function renderCards(apps) {
@@ -724,6 +895,46 @@ function addCustomKeyword() {
   input.value='';
 }
 document.getElementById('kw-add-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')addCustomKeyword();});
+// ── Keyword volume: ASA → autocomplete fallback ──
+async function fetchASAVolume(keywords, adamId) {
+  try {
+    const qs=new URLSearchParams({keywords:keywords.join(',')});
+    if(adamId) qs.set('adamId',adamId);
+    const r=await fetch(`/api/asa/volume?${qs}`);
+    if(!r.ok) return {};
+    const data=await r.json();
+    if(!Array.isArray(data?.data)) return {};
+    return Object.fromEntries(data.data.map(d=>[d.keyword?.toLowerCase(),d.searchPopularityValue]));
+  } catch(_) { return {}; }
+}
+
+async function fetchAutoCompleteVolume(keywords, country) {
+  // Uses App Store autocomplete hints as a volume proxy (no auth needed).
+  // Score: keyword at position 0 in hints = 5 (very popular), not found = 1.
+  const map={};
+  await Promise.allSettled(keywords.map(async kw=>{
+    try {
+      const url=`https://search.itunes.apple.com/WebObjects/MZSearchHints.woa/wa/hints?media=software&term=${encodeURIComponent(kw)}&country=${country}`;
+      const r=await withTimeout(fetch(`/proxy?url=${encodeURIComponent(url)}`),8000);
+      if(!r.ok) return;
+      const data=await r.json();
+      const hints=(data.hints||[]).map(h=>(h.term||'').toLowerCase());
+      const idx=hints.indexOf(kw.toLowerCase());
+      map[kw.toLowerCase()]=idx===0?5:idx===1?4:idx===2||idx===3?3:idx>3?2:1;
+    } catch(_) {}
+  }));
+  return map;
+}
+
+async function fetchKeywordVolume(keywords, iosApp) {
+  if(!iosApp) return {map:{},source:null};
+  const asaMap=await fetchASAVolume(keywords,iosApp.trackId);
+  if(Object.keys(asaMap).length>0) return {map:asaMap,source:'asa'};
+  const acMap=await fetchAutoCompleteVolume(keywords,COUNTRY);
+  if(Object.keys(acMap).length>0) return {map:acMap,source:'autocomplete'};
+  return {map:{},source:null};
+}
+
 async function analyzeKeywords() {
   if(!lastApps){alert('Run an analysis first.');return;}
   const selected=[...document.querySelectorAll('#kw-chips .kw-chip.on')].map(c=>c.dataset.kw);
@@ -732,19 +943,30 @@ async function analyzeKeywords() {
   const kwSec=document.getElementById('kw-results-section');
   document.getElementById('kw-cards').innerHTML=`<p style="color:var(--muted);font-size:13px;padding:10px 0">Checking ${selected.length} keyword${selected.length>1?'s':''}…</p>`;
   kwSec.style.display='block';
-  const kwResults=await Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps)));
+  const iosApp=lastApps.find(a=>a.store==='ios'&&a.trackId);
+  const [kwResults,{map:volumeMap,source:volumeSource}]=await Promise.all([
+    Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps))),
+    fetchKeywordVolume(selected,iosApp||null),
+  ]);
   lastKwResults=kwResults;
-  renderKeywordCards(lastApps,kwResults);
+  renderKeywordCards(lastApps,kwResults,volumeMap,volumeSource);
   renderKeywordGaps(lastApps,kwResults);
   renderKeywordDensity(lastApps,kwResults);
   btn.disabled=false; btn.textContent='Analyze Keywords ▶';
   kwSec.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function renderKeywordCards(apps, kwResults) {
+function volDots(v,source) {
+  const n=Math.min(5,Math.max(1,Math.round(v)));
+  const src=source==='asa'?'Apple Search Ads':'App Store autocomplete (estimate)';
+  return `<span class="vol-dots" title="Search popularity ${n}/5 · ${src}">${'●'.repeat(n)}${'○'.repeat(5-n)}</span>`;
+}
+
+function renderKeywordCards(apps, kwResults, volumeMap={}, volumeSource=null) {
   const sec=document.getElementById('kw-results-section'), container=document.getElementById('kw-cards');
   container.innerHTML='';
   const hasIOS=apps.some(a=>a.store==='ios'), hasAndroid=apps.some(a=>a.store==='android');
+  const hasVolume=hasIOS&&Object.keys(volumeMap).length>0;
   const trackedIos=new Set(apps.filter(a=>a.store==='ios'&&a.trackId).map(a=>a.trackId));
   const trackedAnd=new Set(apps.filter(a=>a.store==='android'&&a.packageId).map(a=>a.packageId));
 
@@ -753,6 +975,11 @@ function renderKeywordCards(apps, kwResults) {
 
   // Header
   let headCols='<th>Keyword</th>';
+  if(hasVolume){
+    const volTitle=volumeSource==='asa'?'Apple Search Ads popularity (1–5)':'App Store autocomplete estimate (1–5)';
+    const volLabel=volumeSource==='asa'?'Vol 🍎':'Vol 🍎~';
+    headCols+=`<th class="center" title="${volTitle}">${volLabel}</th>`;
+  }
   apps.forEach(a=>{ headCols+=`<th class="center">${esc(a.name.length>12?a.name.slice(0,10)+'…':a.name)} ${a.store==='ios'?'🍎':'🤖'}</th>`; });
   if(hasIOS) headCols+='<th>Top 🍎 Apps</th>';
   if(hasAndroid) headCols+='<th>Top 🤖 Apps</th>';
@@ -775,6 +1002,10 @@ function renderKeywordCards(apps, kwResults) {
   for (const {keyword,ranks,iosTop,androidTop} of kwResults) {
     const tr=document.createElement('tr');
     let cells=`<td class="kw-kw">${esc(keyword)}</td>`;
+    if(hasVolume){
+      const vol=volumeMap[keyword.toLowerCase()];
+      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,volumeSource):'<span class="null-val">—</span>'}</td>`;
+    }
     apps.forEach((_,i)=>{
       const r=ranks[i];
       if(!r||r.error){cells+='<td class="kw-rank-cell"><span class="null-val">err</span></td>';return;}
@@ -989,6 +1220,7 @@ async function analyze() {
 
   document.getElementById('loader').style.display='none'; goBtn.disabled=false;
   renderAll(apps);
+  renderChartRanks(apps); // async, updates #chart-rank-section when done
 
   // Show keyword chip selector
   const keywords=extractKeywords(apps);
@@ -1168,6 +1400,271 @@ function renderKeywordDensity(apps, kwResults) {
   sec.style.display='block';
 }
 
+// ── App Reviews ──
+async function fetchiOSReviews(trackId, maxPages=2) {
+  const all=[];
+  for(let p=1;p<=maxPages;p++){
+    try{
+      const r=await withTimeout(fetch(`https://itunes.apple.com/us/rss/customerreviews/page=${p}/id=${trackId}/sortby=mostrecent/json`),10000);
+      if(!r.ok) break;
+      const d=await r.json();
+      const entries=Array.isArray(d.feed?.entry)?d.feed.entry:d.feed?.entry?[d.feed.entry]:[];
+      if(!entries.length) break;
+      all.push(...entries.map(e=>({
+        title:e.title?.label||'(no title)',
+        body:e.content?.label||'',
+        rating:parseInt(e['im:rating']?.label||'0'),
+        author:e.author?.name?.label||'Anonymous',
+        version:e['im:version']?.label||null,
+        date:e.updated?.label?new Date(e.updated.label):null
+      })));
+      if(entries.length<50) break;
+    }catch(_){break;}
+  }
+  return all;
+}
+
+function renderReviews(apps) {
+  const iosApps=apps.filter(a=>a.store==='ios'&&a.trackId&&!a.error);
+  const sec=document.getElementById('reviews-section'), grid=document.getElementById('reviews-grid');
+  if(!iosApps.length){sec.style.display='none';return;}
+  grid.innerHTML='';
+  iosApps.forEach(app=>{
+    const block=document.createElement('div'); block.className='review-app-block';
+    block.innerHTML=`
+      <p class="review-app-name">${esc(app.name)}</p>
+      <button class="review-load-btn">Load recent reviews</button>
+      <div class="review-actions">
+        <button class="llm-btn primary" style="font-size:12px;padding:5px 12px" data-action="local">✨ Analyze with AI</button>
+        <span style="font-size:12px;color:var(--muted);margin:0 2px">or open in</span>
+        <button class="open-in-btn" data-action="chatgpt">ChatGPT ↗</button>
+        <button class="open-in-btn" data-action="gemini">Gemini ↗</button>
+        <button class="open-in-btn" data-action="claude">Claude ↗</button>
+      </div>
+      <div class="review-list"></div>`;
+    const loadBtn=block.querySelector('.review-load-btn');
+    const actions=block.querySelector('.review-actions');
+    loadBtn.addEventListener('click',async()=>{
+      loadBtn.disabled=true; loadBtn.textContent='Loading…';
+      try{
+        const reviews=await fetchiOSReviews(app.trackId);
+        if(!reviews.length){block.querySelector('.review-list').innerHTML='<p style="color:var(--muted);font-size:13px;margin:8px 0">No reviews found yet</p>';loadBtn.textContent='No reviews';return;}
+        block.dataset.reviews=JSON.stringify(reviews.slice(0,50));
+        block.dataset.appName=app.name;
+        block.querySelector('.review-list').innerHTML=reviews.slice(0,8).map(r=>`<div class="review-item"><div class="review-header"><span class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span><span class="review-title">${esc(r.title)}</span>${r.date?`<span class="review-date">${fmtDate(r.date)}</span>`:''}</div><div class="review-body">${esc(r.body)}</div></div>`).join('');
+        loadBtn.textContent=`${reviews.length} reviews — reload`;
+        loadBtn.disabled=false;
+        actions.style.display='flex';
+      }catch(e){loadBtn.textContent='Error — retry';loadBtn.disabled=false;}
+    });
+    actions.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-action]'); if(!btn) return;
+      const action=btn.dataset.action;
+      if(action==='local') analyzeReviewsWithAI(block);
+      else openReviewsInAI(block,action);
+    });
+    grid.appendChild(block);
+  });
+  sec.style.display='block';
+}
+
+async function analyzeReviewsWithAI(block) {
+  const reviews=JSON.parse(block.dataset.reviews||'[]');
+  if(!reviews.length){alert('Load reviews first.');return;}
+  const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('llm-model-sel').value;
+  if(!model){alert('Connect to LM Studio first (scroll to AI Analysis).');return;}
+  const appName=block.dataset.appName||'this app';
+  const reviewText=reviews.slice(0,40).map(r=>`[${r.rating}★] "${r.title}": ${r.body}`).join('\n');
+  const prompt=`Analyze these ${reviews.length} App Store reviews for "${appName}":\n\n${reviewText}\n\nProvide:\n1. **Sentiment Summary** — overall tone and rating distribution insight\n2. **Top Praise Points** — what users love (top 3–5)\n3. **Top Complaints** — most common pain points (top 3–5)\n4. **Feature Requests** — what users keep asking for\n5. **ASO Insights** — specific words and phrases from reviews that should appear in the store listing\n6. **Actionable Improvements** — prioritized list of what to address first`;
+  const wrap=document.getElementById('llm-output-wrap'), out=document.getElementById('llm-output');
+  wrap.style.display='block'; out.textContent='Analyzing reviews…';
+  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  streamLLM(url,model,prompt,out,()=>{});
+}
+
+// ── Open reviews in external AI ──
+const AI_URLS = {
+  chatgpt: 'https://chatgpt.com/',
+  gemini:  'https://gemini.google.com/app',
+  claude:  'https://claude.ai/new',
+};
+
+function buildReviewPrompt(block) {
+  const reviews = JSON.parse(block.dataset.reviews || '[]');
+  const appName = block.dataset.appName || 'this app';
+  const lines = reviews.slice(0, 40).map(r =>
+    `[${r.rating}★] "${r.title}"${r.author?' by '+r.author:''}${r.version?' (v'+r.version+')':''}: ${r.body}`
+  ).join('\n');
+  return `Here are ${reviews.length} recent App Store reviews for "${appName}". Please analyze them and provide:\n\n1. **Sentiment Summary** — overall tone and rating distribution\n2. **Top Praise Points** — what users love (top 3–5)\n3. **Top Complaints** — most common pain points\n4. **Feature Requests** — what users keep asking for\n5. **ASO Insights** — words and phrases from reviews to use in the store listing\n6. **Prioritized Improvements** — what to fix first for maximum impact\n\n---\nREVIEWS:\n${lines}`;
+}
+
+function openReviewsInAI(block, service) {
+  const reviews = JSON.parse(block.dataset.reviews || '[]');
+  if (!reviews.length) { alert('Load reviews first.'); return; }
+  const prompt = buildReviewPrompt(block);
+  navigator.clipboard.writeText(prompt).catch(() => {
+    // fallback: select text from a temp textarea
+    const ta = document.createElement('textarea');
+    ta.value = prompt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  });
+  window.open(AI_URLS[service], '_blank', 'noopener');
+  showToast(`Prompt copied — paste it in ${service === 'chatgpt' ? 'ChatGPT' : service === 'gemini' ? 'Gemini' : 'Claude'} (Ctrl+V)`);
+}
+
+function showToast(msg, duration = 3500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ── Screenshot Analysis ──
+let ssItems = []; // { dataUrl, appName, store, selected }
+
+function renderSsThumbs() {
+  const thumbsEl = document.getElementById('ss-thumbs');
+  const controls = document.getElementById('ss-controls');
+  const dropLbl = document.getElementById('drop-lbl');
+  thumbsEl.innerHTML = '';
+  ssItems.forEach(item => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ss-thumb-wrap' + (item.selected ? ' selected' : '');
+    const img = document.createElement('img');
+    img.className = 'ss-thumb'; img.src = item.dataUrl;
+    wrap.appendChild(img);
+    if (item.appName) {
+      const lbl = document.createElement('div');
+      lbl.className = 'ss-thumb-label'; lbl.textContent = item.appName;
+      wrap.appendChild(lbl);
+    }
+    wrap.addEventListener('click', () => {
+      item.selected = !item.selected;
+      wrap.classList.toggle('selected', item.selected);
+    });
+    thumbsEl.appendChild(wrap);
+  });
+  controls.style.display = ssItems.length ? 'flex' : 'none';
+  dropLbl.style.display = ssItems.length ? 'none' : 'block';
+}
+
+(function setupScreenshotDrop(){
+  const zone = document.getElementById('screenshot-drop');
+  const input = document.getElementById('screenshot-input');
+  const handleFiles = files => {
+    const newFiles = [...files].filter(f => f.type.startsWith('image/'));
+    if (!newFiles.length) return;
+    ssItems = ssItems.filter(s => s.store !== null); // keep store-fetched, replace manual
+    let pending = newFiles.length;
+    newFiles.forEach(f => {
+      const fr = new FileReader();
+      fr.onload = e => {
+        ssItems.push({ dataUrl: e.target.result, appName: null, store: null, selected: true });
+        if (--pending === 0) renderSsThumbs();
+      };
+      fr.readAsDataURL(f);
+    });
+  };
+  input.addEventListener('change', e => handleFiles(e.target.files));
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+})();
+
+function clearScreenshots() {
+  ssItems = [];
+  document.getElementById('ss-thumbs').innerHTML = '';
+  document.getElementById('ss-controls').style.display = 'none';
+  document.getElementById('drop-lbl').style.display = 'block';
+  document.getElementById('ss-output-wrap').style.display = 'none';
+  document.getElementById('screenshot-input').value = '';
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = e => res(e.target.result); fr.onerror = rej; fr.readAsDataURL(blob); });
+}
+
+async function imgUrlToBase64(url) {
+  // Try direct fetch first (works if CDN sends CORS headers)
+  try {
+    const r = await withTimeout(fetch(url, { mode: 'cors' }), 12000);
+    if (r.ok) return blobToDataUrl(await r.blob());
+  } catch (_) {}
+  // Fallback: route through proxy
+  const r = await withTimeout(fetch(`/proxy?url=${encodeURIComponent(url)}`), 15000);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return blobToDataUrl(await r.blob());
+}
+
+async function loadStoreScreenshots() {
+  if (!lastApps?.length) return;
+  const btn = document.getElementById('load-store-ss-btn');
+  btn.disabled = true; btn.textContent = '⏳ Loading…';
+  ssItems = ssItems.filter(s => s.store === null); // keep manual uploads
+  const tasks = [];
+  for (const app of lastApps) {
+    if (!app.screenshots?.length) continue;
+    for (const url of app.screenshots.slice(0, 3)) {
+      tasks.push((async () => {
+        try {
+          const dataUrl = await imgUrlToBase64(url);
+          const label = app.name.length > 14 ? app.name.slice(0, 12) + '…' : app.name;
+          ssItems.push({ dataUrl, appName: label, store: app.store, selected: true });
+        } catch (e) { console.warn('Screenshot load failed:', e.message); }
+      })());
+    }
+  }
+  await Promise.all(tasks);
+  renderSsThumbs();
+  const n = ssItems.filter(s => s.store !== null).length;
+  btn.textContent = n > 0 ? `📱 ${n} loaded — reload` : '📱 Load from analyzed apps';
+  btn.disabled = false;
+  if (n > 0) showToast(`${n} screenshot${n !== 1 ? 's' : ''} loaded — click to toggle selection`);
+}
+
+async function analyzeScreenshots() {
+  const selected = ssItems.filter(s => s.selected);
+  if (!selected.length) { alert('Select at least one screenshot (click a thumbnail to toggle).'); return; }
+  const url = document.getElementById('llm-url').value.trim().replace(/\/$/, '');
+  const model = document.getElementById('llm-model-sel').value;
+  if (!model) { alert('Connect to LM Studio first.'); return; }
+  const mode = document.getElementById('ss-mode-sel').value;
+  const prompts = {
+    ux: 'You are an expert ASO conversion specialist. Analyze these App Store/Google Play screenshots. Evaluate: 1) Visual clarity and hierarchy, 2) How well the value proposition is communicated, 3) Feature messaging effectiveness, 4) Emotional appeal, 5) Call-to-action clarity, 6) What to improve for higher conversion. Be specific and actionable.',
+    brief: 'Based on these screenshots, write a detailed creative brief for a new, higher-converting screenshot set. Include: recommended number of screens, headline copy for each screen, visual style direction, the single key message per screen, and what to stop doing.',
+    compare: `You are an ASO strategist. Compare these app screenshots against typical top-grossing competitors in this category. Identify: what this app communicates clearly vs competitors, where it looks weaker, what positioning angle is being taken, and specific recommendations to stand out.${lastApps ? ` App context: ${lastApps[0]?.name} in ${lastApps[0]?.category || 'its category'}.` : ''}`
+  };
+  const btn = document.getElementById('ss-analyze-btn');
+  const wrap = document.getElementById('ss-output-wrap'), out = document.getElementById('ss-output');
+  btn.disabled = true; wrap.style.display = 'block'; out.textContent = `Analyzing ${selected.length} screenshot${selected.length !== 1 ? 's' : ''}…`;
+  try {
+    const images = selected.map(s => ({ type: 'image_url', image_url: { url: s.dataUrl } }));
+    const content = [...images, { type: 'text', text: prompts[mode] }];
+    await streamLLM(url, model, null, out, () => { btn.disabled = false; }, { vision: true, content });
+  } catch (e) { out.textContent = `Error: ${e.message}`; btn.disabled = false; }
+}
+
+// ── Shared streaming helper ──
+async function streamLLM(url,model,prompt,outputEl,onDone,opts={}){
+  const messages=opts.vision?[{role:'user',content:opts.content}]:[{role:'user',content:prompt}];
+  outputEl.textContent='';
+  try{
+    const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages,temperature:0.6,stream:true})});
+    if(!res.ok) throw new Error(`HTTP ${res.status}${opts.vision?' — ensure model supports vision (LLaVA, Qwen-VL, etc)':''}`);
+    const reader=res.body.getReader(),dec=new TextDecoder();let text='';
+    while(true){
+      const{value,done}=await reader.read();if(done)break;
+      for(const line of dec.decode(value,{stream:true}).split('\n')){
+        if(!line.startsWith('data: '))continue;
+        const d=line.slice(6).trim();if(d==='[DONE]')continue;
+        try{text+=JSON.parse(d).choices?.[0]?.delta?.content||'';outputEl.textContent=text;}catch(_){}
+      }
+    }
+    onDone(text);
+  }catch(e){outputEl.textContent=`Error: ${e.message}`;onDone('');}
+}
+
 // ── LM Studio ──
 async function connectLLM() {
   const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
@@ -1197,22 +1694,7 @@ async function analyzeWithLLM() {
   const outputWrap=document.getElementById('llm-output-wrap'), outputEl=document.getElementById('llm-output');
   const btn=document.getElementById('llm-analyze-btn');
   outputWrap.style.display='block'; outputEl.textContent='Generating…'; btn.disabled=true;
-  try {
-    const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'user',content:buildLLMPrompt(mode)}],temperature:0.7,stream:true})});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const reader=res.body.getReader(), dec=new TextDecoder(); let text=''; outputEl.textContent='';
-    while(true){
-      const {value,done}=await reader.read(); if(done) break;
-      const chunk=dec.decode(value,{stream:true});
-      for(const line of chunk.split('\n')){
-        if(!line.startsWith('data: ')) continue;
-        const d=line.slice(6).trim(); if(d==='[DONE]') continue;
-        try{const p=JSON.parse(d);const delta=p.choices?.[0]?.delta?.content||'';text+=delta;outputEl.textContent=text;}catch(_){}
-      }
-    }
-  } catch(e) {
-    outputEl.textContent=`Error: ${e.message}\n\nMake sure LM Studio is running and the local server is enabled (Server tab in LM Studio).`;
-  } finally { btn.disabled=false; }
+  await streamLLM(url,model,buildLLMPrompt(mode),outputEl,()=>{btn.disabled=false;});
 }
 
 function buildLLMPrompt(mode='competitive') {
@@ -1247,7 +1729,11 @@ function buildLLMPrompt(mode='competitive') {
 
     metadata:`You are an ASO metadata specialist. Optimize the metadata fields for [YOUR APP].\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Title** — rewritten title (iOS: ≤30 chars, Android: ≤50 chars). Show character count.\n2. **Subtitle / Short Description** — iOS subtitle (≤30 chars) or Android short description (≤80 chars). Show character count.\n3. **iOS Keyword Field** — 100-character comma-separated keyword string (no spaces after commas, no repeats from title)\n4. **Description Opening** — rewrite just the first 3 lines that appear before the fold\n5. **Category** — confirm or suggest a better primary category and secondary category if applicable\n\nAlways show character counts next to each suggestion.`,
 
-    positioning:`You are a product positioning and ASO strategist. Help [YOUR APP] stand out in a crowded market.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Unique Selling Proposition** — the single sentence that captures what makes [YOUR APP] different\n2. **Competitor Weaknesses to Exploit** — specific rating pain points or gaps you can own\n3. **Underserved Audience Segments** — based on category and reviews data, who is underserved?\n4. **Blue Ocean Keywords** — keyword niches competitors aren't targeting\n5. **Visual / Creative Direction** — screenshot themes, icon direction, preview video concept\n6. **3 Tagline Options** — punchy, under 10 words each, for use in screenshots and metadata`
+    positioning:`You are a product positioning and ASO strategist. Help [YOUR APP] stand out in a crowded market.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Unique Selling Proposition** — the single sentence that captures what makes [YOUR APP] different\n2. **Competitor Weaknesses to Exploit** — specific rating pain points or gaps you can own\n3. **Underserved Audience Segments** — based on category and reviews data, who is underserved?\n4. **Blue Ocean Keywords** — keyword niches competitors aren't targeting\n5. **Visual / Creative Direction** — screenshot themes, icon direction, preview video concept\n6. **3 Tagline Options** — punchy, under 10 words each, for use in screenshots and metadata`,
+
+    metadata_pkg:`You are a senior ASO specialist. Generate a complete, ready-to-publish metadata package for [YOUR APP] based on competitor research.\n\n## Apps\n\n${appData}${kwData}Output ONLY the following structured sections, with character counts shown:\n\n---\n### iOS App Title (max 30 chars)\n[your suggestion] — X chars\n\n### iOS Subtitle (max 30 chars)\n[your suggestion] — X chars\n\n### iOS Keyword Field (max 100 chars, comma-separated, no spaces after commas, no words repeated from title/subtitle)\n[keyword,string,here] — X chars\n\n### Android Title (max 50 chars)\n[your suggestion] — X chars\n\n### Android Short Description (max 80 chars)\n[your suggestion] — X chars\n\n### Full Description (for both stores, ~2500–3500 chars)\n[full description ready to paste]\n\n### What's New / Release Notes (150 chars)\n[your suggestion]\n---\n\nMake all suggestions keyword-rich based on the data above. Show the exact character count for each field.`,
+
+    localization:`You are an international ASO and mobile growth expert. Analyze localization opportunities for [YOUR APP].\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Current Reach** — assess how many users the current language count reaches\n2. **Top 5 Markets to Prioritize** — specific countries/regions with reasoning (market size, category competition, your app's fit)\n3. **Language-Specific ASO** — for each recommended market: local keyword themes, cultural nuances for the listing, competitor presence\n4. **Quick Wins** — localization changes doable this sprint (screenshot localization, subtitle translation, keyword field per locale)\n5. **ROI Estimate** — rough ranking of which localization would yield the most downloads`
   };
   return prompts[mode]||prompts.competitive;
 }
