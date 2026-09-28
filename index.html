@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASO Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #edf0f8;
+  --border: #dce2ef;
+  --border-soft: #e8edf6;
+  --text: #0d1628;
+  --text-2: #2c3d5a;
+  --muted: #7889a6;
+  --accent: #2557d6;
+  --accent-soft: #dce8ff;
+  --accent-mid: rgba(37,87,214,.09);
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --danger: #b91c1c;
+  --danger-bg: #fee2e2;
+  --warn: #92400e;
+  --warn-bg: #fef3c7;
+  --ios-bg: #e0f0ff; --ios-fg: #0066cc;
+  --android-bg: #dcfce7; --android-fg: #16a34a;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #050c17;
+    --surface: #0b1526;
+    --surface-2: #111f36;
+    --border: #1a2d48;
+    --border-soft: #0e1c30;
+    --text: #e1e8f6;
+    --text-2: #8da3c0;
+    --muted: #475f7e;
+    --accent: #4d8af5;
+    --accent-soft: #12244e;
+    --accent-mid: rgba(77,138,245,.12);
+    --success: #4ade80;
+    --success-bg: #052e16;
+    --danger: #fb7185;
+    --danger-bg: #3b0a18;
+    --ios-bg: #0e2848; --ios-fg: #5aadff;
+    --android-bg: #082a18; --android-fg: #4ade80;
+    --warn: #fbbf24;
+    --warn-bg: #431407;
+    color-scheme: dark;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  margin: 0;
+  padding: 32px 20px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.wrap { max-width: 1160px; margin: 0 auto; }
+
+/* ── Header ── */
+.hdr { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.hdr-logo { width: 44px; height: 44px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 14px rgba(37,87,214,.3); }
+.hdr-logo svg { width: 24px; height: 24px; fill: white; }
+.hdr-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -.03em; margin: 0; }
+.hdr-sub { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* ── Inputs ── */
+.blk { margin-bottom: 24px; }
+.blk-title { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600; margin: 0 0 3px; letter-spacing: -.01em; }
+.blk-desc { font-size: 13px; color: var(--muted); margin: 0 0 11px; }
+.url-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 13px; transition: border-color .2s; margin-bottom: 7px; }
+.url-row:focus-within { border-color: var(--accent); }
+.url-row.yours { border-color: var(--accent); background: var(--accent-mid); }
+.row-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); white-space: nowrap; min-width: 80px; flex-shrink: 0; }
+.url-row.yours .row-lbl { color: var(--accent); }
+.url-field { flex: 1; border: none; background: transparent; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text); outline: none; min-width: 0; }
+.url-field::placeholder { font-family: 'DM Sans', sans-serif; color: var(--muted); font-size: 13px; }
+.plat { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px; flex-shrink: 0; white-space: nowrap; }
+.plat.ios { background: var(--ios-bg); color: var(--ios-fg); }
+.plat.android { background: var(--android-bg); color: var(--android-fg); }
+.rm-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px; border-radius: 4px; display: flex; align-items: center; flex-shrink: 0; transition: color .15s; }
+.rm-btn:hover { color: var(--danger); }
+.add-btn { display: flex; align-items: center; gap: 8px; width: 100%; background: var(--surface); border: 1.5px dashed var(--border); border-radius: 10px; padding: 10px 13px; cursor: pointer; font-size: 13.5px; color: var(--muted); font-family: 'DM Sans', sans-serif; transition: border-color .2s, color .2s; margin-top: 2px; }
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.add-btn:disabled { opacity: .4; pointer-events: none; }
+
+/* ── Bottom bar ── */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+.bar-left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.region-lbl { font-size: 13px; color: var(--muted); }
+.region-sel { font-family: 'DM Sans', sans-serif; font-size: 13.5px; padding: 7px 11px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); outline: none; cursor: pointer; }
+.ex-btn { background: none; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 13px; font-size: 13px; color: var(--muted); font-family: 'DM Sans', sans-serif; cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
+.ex-btn:hover { border-color: var(--accent); color: var(--accent); }
+.go-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 26px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity .2s; white-space: nowrap; }
+.go-btn:hover { opacity: .88; }
+.go-btn:disabled { opacity: .5; cursor: default; }
+
+/* ── Loader ── */
+.ld-wrap { text-align: center; padding: 64px 20px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .72s linear infinite; margin: 0 auto 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ld-txt { font-size: 14px; color: var(--muted); }
+.ld-steps { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.ld-steps li { padding: 2px 0; }
+.ld-steps li.done { color: var(--success); }
+.ld-steps li.fail { color: var(--danger); }
+.ld-steps li.active { color: var(--accent); }
+
+/* ── Results ── */
+#results { display: none; }
+.r-section { margin-bottom: 36px; }
+.r-h { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700; margin: 0 0 14px; letter-spacing: -.01em; }
+
+/* ── App cards ── */
+.cards-row { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.app-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; flex-shrink: 0; width: 200px; display: flex; flex-direction: column; gap: 9px; }
+.app-card.yours { border-color: var(--accent); }
+.card-top { display: flex; gap: 10px; align-items: flex-start; }
+.card-icon { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; flex-shrink: 0; background: var(--surface-2); }
+.card-icon-ph { width: 52px; height: 52px; border-radius: 12px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+.card-name { font-family: 'Outfit', sans-serif; font-size: 13.5px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.card-dev { font-size: 11.5px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.bdg { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: .03em; }
+.bdg.ios { background: var(--ios-bg); color: var(--ios-fg); }
+.bdg.android { background: var(--android-bg); color: var(--android-fg); }
+.bdg.yours { background: var(--accent-soft); color: var(--accent); }
+.card-rating { display: flex; align-items: center; gap: 5px; font-size: 13px; }
+.stars { color: #f59e0b; font-size: 12px; letter-spacing: -.5px; }
+.rval { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500; }
+.rct { font-size: 12px; color: var(--muted); }
+.card-link { font-size: 12px; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+.card-link:hover { text-decoration: underline; }
+.card-err { font-size: 12px; color: var(--danger); background: var(--danger-bg); border-radius: 6px; padding: 5px 8px; }
+
+/* ── Charts ── */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 36px; }
+@media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+.chart-title { font-family: 'Outfit', sans-serif; font-size: 14.5px; font-weight: 600; margin: 0 0 12px; letter-spacing: -.01em; }
+.chart-inner { position: relative; height: 190px; }
+
+/* ── Comparison table ── */
+.tbl-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.cmp th { background: var(--surface-2); padding: 9px 15px; border-bottom: 1px solid var(--border); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); white-space: nowrap; text-align: left; }
+.cmp th:first-child { position: sticky; left: 0; z-index: 2; }
+.cmp td { padding: 10px 15px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; color: var(--text); }
+.cmp td:first-child { position: sticky; left: 0; background: var(--bg); font-size: 12.5px; color: var(--text-2); font-weight: 500; white-space: nowrap; z-index: 1; border-right: 1px solid var(--border-soft); }
+.cmp tr:last-child td { border-bottom: none; }
+.cmp tr:hover td { background: var(--surface-2); }
+.cmp tr:hover td:first-child { background: var(--surface-2); }
+.pill { display: inline; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 2px 8px; border-radius: 5px; }
+.pill.best { background: var(--success-bg); color: var(--success); font-weight: 600; }
+.pill.worst { background: var(--danger-bg); color: var(--danger); }
+.null-val { color: var(--muted); font-style: italic; }
+.win-row td { background: var(--surface-2) !important; font-weight: 600; }
+.win-chip { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 5px; background: var(--success-bg); color: var(--success); margin-right: 4px; }
+.note { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+
+/* ── Keyword rankings ── */
+.kw-rank { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 5px; white-space: nowrap; }
+.kw-rank.top3  { background: #fef3c7; color: #78350f; }
+.kw-rank.top10 { background: var(--success-bg); color: var(--success); }
+.kw-rank.top50 { background: var(--accent-soft); color: var(--accent); }
+.kw-rank.low   { background: var(--surface-2); color: var(--text-2); }
+@media (prefers-color-scheme: dark) { .kw-rank.top3 { background: #3b1a00; color: #fbbf24; } }
+.kw-store-hd { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: block; margin-bottom: 1px; }
+
+@media (max-width: 560px) {
+  .bar { flex-direction: column; align-items: stretch; }
+  .go-btn { justify-content: center; }
+  .bar-left { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+</head>
+<body>
+<div id="proxy-banner" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:10px 16px;margin-bottom:20px;font-size:13px;color:#92400e;align-items:flex-start;gap:10px">
+  <span style="flex-shrink:0;font-size:16px">⚠️</span>
+  <div>
+    <strong>Local proxy not running</strong> — Google Play data requires <code style="background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px">proxy.py</code> to fetch store pages.<br>
+    Open a terminal in <code style="background:rgba(0,0,0,.08);padding:1px 5px;border-radius:3px">D:\tools\aso-analyzer</code> and run: <strong>python proxy.py</strong><br>
+    <span style="color:#78350f">App Store (iOS) apps still work without the proxy.</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hdr">
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24"><rect x="2" y="13" width="4" height="8" rx="1"/><rect x="9" y="8" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="18" rx="1"/></svg>
+    </div>
+    <div>
+      <h1 class="hdr-title">ASO Analyzer</h1>
+      <p class="hdr-sub">Compare app store metrics against competitors — no API key required</p>
+    </div>
+  </header>
+
+  <div>
+    <div class="blk">
+      <p class="blk-title">Your App</p>
+      <p class="blk-desc">Paste your App Store or Google Play URL</p>
+      <div class="url-row yours">
+        <span class="row-lbl">Your App</span>
+        <input class="url-field" id="your-url" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false">
+        <span class="plat" id="your-plat"></span>
+      </div>
+    </div>
+
+    <div class="blk">
+      <p class="blk-title">Competitors</p>
+      <p class="blk-desc">Add up to 4 competitor apps</p>
+      <div id="comp-list"></div>
+      <button class="add-btn" id="add-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add competitor
+      </button>
+    </div>
+
+    <div class="blk">
+      <p class="blk-title">Keywords to Track</p>
+      <p class="blk-desc">Comma-separated keywords — checks your app's search rank position (top 200 tracked)</p>
+      <div class="url-row" style="align-items:center">
+        <span class="row-lbl" style="min-width:72px">Keywords</span>
+        <input class="url-field" id="kw-input" type="text" placeholder="ai chat, chatbot, productivity, note taking…" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="bar-left">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="region-lbl">App Store region:</span>
+          <select class="region-sel" id="region">
+            <option value="us">🇺🇸 US</option>
+            <option value="gb">🇬🇧 UK</option>
+            <option value="ca">🇨🇦 Canada</option>
+            <option value="au">🇦🇺 Australia</option>
+            <option value="de">🇩🇪 Germany</option>
+            <option value="fr">🇫🇷 France</option>
+            <option value="jp">🇯🇵 Japan</option>
+            <option value="in">🇮🇳 India</option>
+            <option value="br">🇧🇷 Brazil</option>
+          </select>
+        </div>
+        <button class="ex-btn" id="ex-btn">Try example: Language apps</button>
+      </div>
+      <button class="go-btn" id="go-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analyze Apps
+      </button>
+    </div>
+  </div>
+
+  <div id="loader" style="display:none">
+    <div class="ld-wrap">
+      <div class="spinner"></div>
+      <p class="ld-txt" id="ld-txt">Fetching app data…</p>
+      <ul class="ld-steps" id="ld-steps"></ul>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="r-section">
+      <p class="r-h">Apps Compared</p>
+      <div class="cards-row" id="app-cards"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <p class="chart-title">Overall Rating</p>
+        <div class="chart-inner"><canvas id="chart-r"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <p class="chart-title">Number of Ratings</p>
+        <div class="chart-inner"><canvas id="chart-n"></canvas></div>
+      </div>
+    </div>
+    <div class="r-section">
+      <p class="r-h">Metric Comparison</p>
+      <div class="tbl-scroll">
+        <table class="cmp">
+          <thead id="cmp-head"></thead>
+          <tbody id="cmp-body"></tbody>
+        </table>
+      </div>
+      <p class="note" id="android-note" style="display:none">ℹ️ Google Play data is extracted from the public store page (via CORS proxy). Version, size, and last-updated are not always available this way — rating and review count come from structured JSON-LD embedded in the page.</p>
+    </div>
+
+    <div class="r-section" id="kw-results-section" style="display:none">
+      <p class="r-h">Keyword Rankings</p>
+      <div class="tbl-scroll">
+        <table class="cmp">
+          <thead id="kw-head"></thead>
+          <tbody id="kw-body"></tbody>
+        </table>
+      </div>
+      <p class="note">Rankings from live App Store / Play Store search (top 200 shown). Position varies by region, device, and time. App Store uses iTunes Search API; Play Store via local proxy. Rankings beyond #200 show as —.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#4d8af5','#22c55e','#f59e0b','#a78bfa','#f43f5e'];
+
+// Proxy check runs after DOM is ready (placed here; LOCAL_PROXY declared below)
+function checkProxy() {
+  withTimeout(fetch('http://localhost:3131/?url=https://example.com'), 3000)
+    .then(() => { document.getElementById('proxy-banner').style.display = 'none'; })
+    .catch(() => { document.getElementById('proxy-banner').style.display = 'flex'; });
+}
+window.addEventListener('DOMContentLoaded', checkProxy);
+let compCount = 0;
+let chartR = null, chartN = null;
+
+// ── Helpers ──
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_,r) => setTimeout(() => r(new Error('Request timed out')), ms))
+  ]);
+}
+
+function fmtBytes(b) {
+  const mb = b / 1048576;
+  return mb >= 1000 ? `${(mb/1024).toFixed(1)} GB` : `${mb.toFixed(0)} MB`;
+}
+function fmtNum(n) {
+  if (n == null) return null;
+  if (n >= 1e9) return `${(n/1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n/1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n/1e3).toFixed(0)}K`;
+  return n.toLocaleString();
+}
+function fmtDate(d) {
+  if (!d) return null;
+  const days = Math.floor((Date.now() - d) / 86400000);
+  if (days < 1) return 'Today';
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days/7)}w ago`;
+  if (days < 365) return `${Math.floor(days/30)}mo ago`;
+  return `${Math.floor(days/365)}y ago`;
+}
+function stars(r) {
+  if (!r) return '';
+  const f = Math.floor(r), h = r % 1 >= .5 ? 1 : 0, e = 5 - f - h;
+  return '★'.repeat(f) + (h ? '½' : '') + '☆'.repeat(e);
+}
+function esc(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function isDark() {
+  return window.matchMedia('(prefers-color-scheme:dark)').matches;
+}
+
+// ── URL parsing ──
+function parseUrl(raw) {
+  try {
+    const u = new URL(raw.trim());
+    const h = u.hostname.toLowerCase();
+    if (h === 'apps.apple.com' || h === 'itunes.apple.com') {
+      const m = u.pathname.match(/\/id(\d+)/);
+      const id = m ? m[1] : u.searchParams.get('id');
+      if (id) return { store: 'ios', id };
+    }
+    if (h === 'play.google.com') {
+      const id = u.searchParams.get('id');
+      if (id) return { store: 'android', id };
+    }
+  } catch (_) {}
+  return null;
+}
+
+function detectPlatform(val) {
+  try {
+    const h = new URL(val.trim()).hostname.toLowerCase();
+    if (h === 'apps.apple.com' || h === 'itunes.apple.com') return 'ios';
+    if (h === 'play.google.com') return 'android';
+  } catch (_) {}
+  return null;
+}
+
+function setPlatBadge(el, val) {
+  const p = detectPlatform(val);
+  if (p === 'ios')     { el.textContent = '🍎 iOS';     el.className = 'plat ios'; }
+  else if (p === 'android') { el.textContent = '🤖 Android'; el.className = 'plat android'; }
+  else                 { el.textContent = '';             el.className = 'plat'; }
+}
+
+// ── App Store ──
+async function fetchiOS(id, country) {
+  const url = `https://itunes.apple.com/lookup?id=${id}&country=${country}&entity=software`;
+  let res;
+  try {
+    res = await withTimeout(fetch(url), 12000);
+  } catch (e) {
+    throw new Error(`App Store: ${e.message}`);
+  }
+  if (!res.ok) throw new Error(`App Store HTTP ${res.status}`);
+  const j = await res.json();
+  if (!j.results?.length) throw new Error('App not found on App Store');
+  const a = j.results[0];
+  return {
+    store: 'ios', trackId: String(a.trackId), name: a.trackName, dev: a.sellerName,
+    icon: a.artworkUrl512 || a.artworkUrl100,
+    rating: a.averageUserRating ?? null,
+    ratingCount: a.userRatingCount ?? null,
+    price: a.price === 0 ? 'Free' : `$${a.price.toFixed(2)}`,
+    priceVal: a.price ?? 0,
+    category: a.primaryGenreName ?? null,
+    version: a.version ?? null,
+    updated: a.currentVersionReleaseDate ? new Date(a.currentVersionReleaseDate) : null,
+    size: a.fileSizeBytes ? fmtBytes(+a.fileSizeBytes) : null,
+    ageRating: a.contentAdvisoryRating ?? null,
+    langs: a.languageCodesISO2A?.length ?? null,
+    url: a.trackViewUrl,
+    partial: false
+  };
+}
+
+// ── Play Store ──
+const LOCAL_PROXY = 'http://localhost:3131';
+
+async function fetchAndroid(id, onStatus) {
+  const playUrl = `https://play.google.com/store/apps/details?id=${encodeURIComponent(id)}&hl=en&gl=us`;
+  onStatus?.('Fetching via local proxy…');
+  try {
+    const r = await withTimeout(
+      fetch(`${LOCAL_PROXY}/?url=${encodeURIComponent(playUrl)}`),
+      22000
+    );
+    if (r.ok) {
+      const html = await r.text();
+      if (html.length > 800) return parsePlayHtml(html, id);
+    }
+    throw new Error(`Proxy returned HTTP ${r.status}`);
+  } catch (e) {
+    throw new Error(
+      e.message.includes('proxy')
+        ? e.message
+        : `proxy.py not running — start it with: python proxy.py\n(${e.message})`
+    );
+  }
+}
+
+function parsePlayHtml(html, id) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  let ld = null;
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+    try {
+      const p = JSON.parse(s.textContent);
+      if (p['@type'] === 'SoftwareApplication') ld = p;
+    } catch (_) {}
+  });
+
+  const og = prop => doc.querySelector(`meta[property="${prop}"]`)?.getAttribute('content') || null;
+
+  const rawTitle = ld?.name || og('og:title') || '';
+  const name = rawTitle
+    .replace(/\s*[-–]\s*Apps on Google Play\s*$/i, '')
+    .replace(/\s*[-–]\s*Google Play\s*$/i, '')
+    .trim() || `App (${id})`;
+
+  const rating    = ld?.aggregateRating?.ratingValue ? parseFloat(ld.aggregateRating.ratingValue) : null;
+  const ratingCount = ld?.aggregateRating?.ratingCount ? parseInt(ld.aggregateRating.ratingCount) : null;
+  const dev       = ld?.author?.name || null;
+  let   cat       = ld?.applicationCategory || null;
+  if (cat) cat = cat.replace(/Application$/, '').trim() || cat;
+  const priceStr  = ld?.offers?.price;
+  const price     = (priceStr === '0' || priceStr === '0.0') ? 'Free' : priceStr ? `$${parseFloat(priceStr).toFixed(2)}` : null;
+  const priceVal  = priceStr ? parseFloat(priceStr) : 0;
+  const icon      = og('og:image');
+
+  return {
+    store: 'android', packageId: id, name, dev, icon,
+    rating: isNaN(rating) ? null : rating,
+    ratingCount: isNaN(ratingCount) ? null : ratingCount,
+    price, priceVal, category: cat,
+    version: null, updated: null, size: null, ageRating: null, langs: null,
+    url: `https://play.google.com/store/apps/details?id=${id}`,
+    partial: true
+  };
+}
+
+// ── Keyword ranking ──
+async function fetchKeywordRanking(keyword, apps, country) {
+  const ranks = apps.map(() => ({ pos: null, error: false }));
+
+  const hasIOS     = apps.some(a => a.store === 'ios'     && a.trackId);
+  const hasAndroid = apps.some(a => a.store === 'android' && a.packageId);
+
+  await Promise.all([
+    hasIOS ? (async () => {
+      try {
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(keyword)}&entity=software&limit=200&country=${country}`;
+        const res = await withTimeout(fetch(url), 12000);
+        if (!res.ok) return;
+        const data = await res.json();
+        const ids = (data.results || []).map(r => String(r.trackId));
+        apps.forEach((a, i) => {
+          if (a.store === 'ios' && a.trackId) {
+            const pos = ids.indexOf(a.trackId);
+            ranks[i].pos = pos >= 0 ? pos + 1 : null;
+          }
+        });
+      } catch (_) {
+        apps.forEach((a, i) => { if (a.store === 'ios') ranks[i].error = true; });
+      }
+    })() : Promise.resolve(),
+
+    hasAndroid ? (async () => {
+      try {
+        const searchUrl = `https://play.google.com/store/search?q=${encodeURIComponent(keyword)}&c=apps&hl=en&gl=us`;
+        const r = await withTimeout(
+          fetch(`${LOCAL_PROXY}/?url=${encodeURIComponent(searchUrl)}`),
+          18000
+        );
+        if (!r.ok) { apps.forEach((a,i) => { if (a.store==='android') ranks[i].error=true; }); return; }
+        const html = await r.text();
+        const seen = new Set(), ordered = [];
+        const re = /\/store\/apps\/details\?id=([a-zA-Z0-9._]+)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          if (!seen.has(m[1])) { seen.add(m[1]); ordered.push(m[1]); }
+        }
+        apps.forEach((a, i) => {
+          if (a.store === 'android' && a.packageId) {
+            const pos = ordered.indexOf(a.packageId);
+            ranks[i].pos = pos >= 0 ? pos + 1 : null;
+          }
+        });
+      } catch (_) {
+        apps.forEach((a, i) => { if (a.store === 'android') ranks[i].error = true; });
+      }
+    })() : Promise.resolve()
+  ]);
+
+  return { keyword, ranks };
+}
+
+// ── Render ──
+function renderAll(apps, kwResults = []) {
+  renderCards(apps);
+  renderCharts(apps);
+  renderTable(apps);
+  if (kwResults.length > 0) {
+    renderKeywordTable(apps, kwResults);
+  } else {
+    document.getElementById('kw-results-section').style.display = 'none';
+  }
+  const hasAndroid = apps.some(a => a.store === 'android');
+  document.getElementById('android-note').style.display = hasAndroid ? 'block' : 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderCards(apps) {
+  const el = document.getElementById('app-cards');
+  el.innerHTML = '';
+  apps.forEach((a, i) => {
+    const card = document.createElement('div');
+    card.className = 'app-card' + (i === 0 ? ' yours' : '');
+    card.innerHTML = `
+      <div class="card-top">
+        ${a.icon
+          ? `<img class="card-icon" src="${esc(a.icon)}" alt="" onerror="this.outerHTML='<div class=\\'card-icon-ph\\'>${a.store==='ios'?'🍎':'🤖'}</div>'">`
+          : `<div class="card-icon-ph">${a.store === 'ios' ? '🍎' : '🤖'}</div>`}
+        <div style="min-width:0">
+          <div class="card-name">${esc(a.name)}</div>
+          ${a.dev ? `<div class="card-dev">${esc(a.dev)}</div>` : ''}
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="bdg ${a.store}">${a.store === 'ios' ? '🍎 iOS' : '🤖 Android'}</span>
+        ${i === 0 ? '<span class="bdg yours">Your App</span>' : ''}
+      </div>
+      ${a.error ? `<div class="card-err">⚠ ${esc(a.error)}</div>` : ''}
+      ${a.rating != null ? `
+        <div class="card-rating">
+          <span class="stars">${stars(a.rating)}</span>
+          <span class="rval">${a.rating.toFixed(1)}</span>
+          ${a.ratingCount != null ? `<span class="rct">(${fmtNum(a.ratingCount)})</span>` : ''}
+        </div>` : ''}
+      <a class="card-link" href="${esc(a.url)}" target="_blank" rel="noopener">View in store ↗</a>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function renderCharts(apps) {
+  if (chartR) chartR.destroy();
+  if (chartN) chartN.destroy();
+  const labels = apps.map(a => a.name.length > 16 ? a.name.slice(0, 14) + '…' : a.name);
+  const colors = COLORS.slice(0, apps.length);
+  const dark = isDark();
+  const tc = dark ? '#8da3c0' : '#7889a6';
+  const gc = dark ? '#1a2d48' : '#dce2ef';
+  const base = (yMax, cb) => ({
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { max: yMax, ticks: { color: tc, callback: cb }, grid: { color: gc }, border: { color: 'transparent' } },
+      x: { ticks: { color: tc }, grid: { display: false }, border: { color: 'transparent' } }
+    }
+  });
+  chartR = new Chart(document.getElementById('chart-r'),{
+    type:'bar',
+    data:{labels,datasets:[{data:apps.map(a=>a.rating??0),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
+    options:base(5,v=>`${v}★`)
+  });
+  chartN = new Chart(document.getElementById('chart-n'),{
+    type:'bar',
+    data:{labels,datasets:[{data:apps.map(a=>a.ratingCount??0),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
+    options:base(undefined,v=>fmtNum(v))
+  });
+}
+
+function renderTable(apps) {
+  const thead = document.getElementById('cmp-head');
+  const tbody = document.getElementById('cmp-body');
+
+  const hr = document.createElement('tr');
+  hr.innerHTML = '<th>Metric</th>' + apps.map((a,i) =>
+    `<th style="${i===0?'background:var(--accent-mid);color:var(--accent)':''}">${esc(a.name.length>18?a.name.slice(0,16)+'…':a.name)}</th>`
+  ).join('');
+  thead.innerHTML = ''; thead.appendChild(hr);
+
+  const metrics = [
+    { label:'📱 Platform',      get:a=>a.store,                          fmt:v=>v==='ios'?'🍎 iOS':'🤖 Android',                           cmp:null },
+    { label:'⭐ Rating',         get:a=>a.rating,                         fmt:v=>v!=null?`${v.toFixed(2)} <span style="color:#f59e0b;font-size:11px">${stars(v)}</span>`:null, cmp:'higher' },
+    { label:'💬 Total Ratings',  get:a=>a.ratingCount,                    fmt:v=>v!=null?v.toLocaleString():null,                           cmp:'higher' },
+    { label:'💰 Price',          get:a=>a.priceVal,   fmt:(_,a)=>a.price, cmp:'lower' },
+    { label:'🏷️ Category',       get:a=>a.category,                       fmt:v=>v,                                                         cmp:null },
+    { label:'👤 Developer',      get:a=>a.dev,                            fmt:v=>v,                                                         cmp:null },
+    { label:'🔢 Version',        get:a=>a.version,                        fmt:v=>v,                                                         cmp:null },
+    { label:'📅 Last Updated',   get:a=>a.updated?.getTime()??null,       fmt:(_,a)=>fmtDate(a.updated),                                    cmp:'higher' },
+    { label:'📦 Size',           get:a=>a.size,                           fmt:v=>v,                                                         cmp:null },
+    { label:'🔞 Age Rating',     get:a=>a.ageRating,                      fmt:v=>v,                                                         cmp:null },
+    { label:'🌍 Languages',      get:a=>a.langs,                          fmt:v=>v!=null?`${v}`:null,                                       cmp:'higher' },
+  ];
+
+  const wins = new Array(apps.length).fill(0);
+  tbody.innerHTML = '';
+
+  for (const m of metrics) {
+    const vals = apps.map(a => m.get(a));
+    let bestI = null, worstI = null;
+    if (m.cmp) {
+      const valid = vals.map((v,i)=>({v,i})).filter(x=>x.v!=null);
+      if (valid.length >= 2 && new Set(valid.map(x=>x.v)).size > 1) {
+        if (m.cmp === 'higher') {
+          bestI  = valid.reduce((a,b) => a.v >= b.v ? a : b).i;
+          worstI = valid.reduce((a,b) => a.v <= b.v ? a : b).i;
+        } else {
+          bestI  = valid.reduce((a,b) => a.v <= b.v ? a : b).i;
+          worstI = valid.reduce((a,b) => a.v >= b.v ? a : b).i;
+        }
+        if (bestI != null) wins[bestI]++;
+      }
+    }
+    const tr = document.createElement('tr');
+    const cells = apps.map((a,i) => {
+      const disp = m.fmt(vals[i], a);
+      if (!disp) return `<td><span class="null-val">—</span></td>`;
+      let cls = '';
+      if (bestI === i && worstI !== i) cls = 'pill best';
+      else if (worstI === i && bestI !== i) cls = 'pill worst';
+      return `<td>${cls ? `<span class="${cls}">${disp}</span>` : disp}</td>`;
+    }).join('');
+    tr.innerHTML = `<td>${m.label}</td>${cells}`;
+    tbody.appendChild(tr);
+  }
+
+  const maxW = Math.max(...wins);
+  const wr = document.createElement('tr');
+  wr.className = 'win-row';
+  wr.innerHTML = '<td>🏆 Score</td>' + apps.map((_,i) =>
+    `<td>${wins[i]===maxW&&maxW>0?'<span class="win-chip">Winner</span>':''}<span style="color:var(--muted);font-size:12px">${wins[i]} win${wins[i]!==1?'s':''}</span></td>`
+  ).join('');
+  tbody.appendChild(wr);
+}
+
+function renderKeywordTable(apps, kwResults) {
+  const sec = document.getElementById('kw-results-section');
+  const thead = document.getElementById('kw-head');
+  const tbody = document.getElementById('kw-body');
+
+  const hr = document.createElement('tr');
+  hr.innerHTML = '<th>Keyword</th>' + apps.map((a, i) =>
+    `<th style="${i===0?'background:var(--accent-mid);color:var(--accent)':''}">${esc(a.name.length>18?a.name.slice(0,16)+'…':a.name)}</th>`
+  ).join('');
+  thead.innerHTML = ''; thead.appendChild(hr);
+  tbody.innerHTML = '';
+
+  for (const { keyword, ranks } of kwResults) {
+    const tr = document.createElement('tr');
+    const cells = apps.map((a, i) => {
+      const r = ranks[i];
+      if (a.store === 'ios' && !a.trackId) return `<td><span class="null-val">—</span></td>`;
+      if (a.store === 'android' && !a.packageId) return `<td><span class="null-val">—</span></td>`;
+      if (r.error) return `<td><span class="null-val" title="Search failed">err</span></td>`;
+      if (r.pos == null) return `<td><span class="null-val">—</span></td>`;
+      const cls = r.pos <= 3 ? 'top3' : r.pos <= 10 ? 'top10' : r.pos <= 50 ? 'top50' : 'low';
+      return `<td><span class="kw-rank ${cls}">#${r.pos}</span></td>`;
+    }).join('');
+    tr.innerHTML = `<td style="font-size:13px;font-weight:500">${esc(keyword)}</td>${cells}`;
+    tbody.appendChild(tr);
+  }
+
+  sec.style.display = 'block';
+}
+
+// ── Competitor rows ──
+function makeCompRow(n) {
+  const div = document.createElement('div');
+  div.className = 'url-row';
+  const badge = document.createElement('span');
+  badge.className = 'plat';
+  div.innerHTML = `
+    <span class="row-lbl">Comp. ${n}</span>
+    <input class="url-field comp-field" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false">
+    <button class="rm-btn" title="Remove" aria-label="Remove">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>`;
+  div.insertBefore(badge, div.querySelector('.rm-btn'));
+  div.querySelector('.comp-field').addEventListener('input', function() { setPlatBadge(badge, this.value); });
+  div.querySelector('.rm-btn').addEventListener('click', () => {
+    div.remove();
+    reNumberComps();
+    compCount--;
+    updateAddBtn();
+  });
+  return div;
+}
+
+function reNumberComps() {
+  document.querySelectorAll('#comp-list .url-row').forEach((r,i) => {
+    r.querySelector('.row-lbl').textContent = `Comp. ${i+1}`;
+  });
+  compCount = document.querySelectorAll('#comp-list .url-row').length;
+}
+
+function updateAddBtn() {
+  document.getElementById('add-btn').disabled = compCount >= 4;
+}
+
+document.getElementById('add-btn').addEventListener('click', () => {
+  if (compCount >= 4) return;
+  compCount++;
+  document.getElementById('comp-list').appendChild(makeCompRow(compCount));
+  updateAddBtn();
+});
+
+document.getElementById('your-url').addEventListener('input', function() {
+  setPlatBadge(document.getElementById('your-plat'), this.value);
+});
+
+document.getElementById('ex-btn').addEventListener('click', () => {
+  document.getElementById('your-url').value = 'https://apps.apple.com/us/app/duolingo/id570060128';
+  setPlatBadge(document.getElementById('your-plat'), document.getElementById('your-url').value);
+  document.getElementById('comp-list').innerHTML = '';
+  compCount = 0;
+  [
+    'https://apps.apple.com/us/app/babbel/id829587759',
+    'https://play.google.com/store/apps/details?id=air.com.rosettastone.mobile.CoursePlayer'
+  ].forEach(url => {
+    compCount++;
+    const row = makeCompRow(compCount);
+    row.querySelector('.comp-field').value = url;
+    setPlatBadge(row.querySelector('.plat'), url);
+    document.getElementById('comp-list').appendChild(row);
+  });
+  updateAddBtn();
+});
+
+// ── Analyze ──
+document.getElementById('go-btn').addEventListener('click', analyze);
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) analyze(); });
+
+async function analyze() {
+  const yourRaw = document.getElementById('your-url').value.trim();
+  const yourParsed = parseUrl(yourRaw);
+  if (!yourRaw || !yourParsed) {
+    alert('Please enter a valid App Store or Google Play URL for your app.');
+    return;
+  }
+
+  const toFetch = [{ parsed: yourParsed }];
+  document.querySelectorAll('.comp-field').forEach(f => {
+    const p = parseUrl(f.value.trim());
+    if (p) toFetch.push({ parsed: p });
+  });
+
+  const country = document.getElementById('region').value;
+  const goBtn = document.getElementById('go-btn');
+  goBtn.disabled = true;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('loader').style.display = 'block';
+
+  const ldTxt = document.getElementById('ld-txt');
+  const ldSteps = document.getElementById('ld-steps');
+  ldSteps.innerHTML = '';
+
+  // Create step items
+  const stepEls = toFetch.map((_, i) => {
+    const li = document.createElement('li');
+    li.textContent = `App ${i + 1}…`;
+    ldSteps.appendChild(li);
+    return li;
+  });
+
+  let done = 0;
+  ldTxt.textContent = `Fetching ${toFetch.length} app${toFetch.length > 1 ? 's' : ''}…`;
+
+  const apps = await Promise.all(toFetch.map(async ({ parsed }, i) => {
+    stepEls[i].className = 'active';
+    stepEls[i].textContent = `App ${i+1}: fetching…`;
+    try {
+      const onStatus = msg => { stepEls[i].textContent = `App ${i+1}: ${msg}`; };
+      const data = parsed.store === 'ios'
+        ? await fetchiOS(parsed.id, country)
+        : await fetchAndroid(parsed.id, onStatus);
+      done++;
+      ldTxt.textContent = `Fetched ${done}/${toFetch.length}…`;
+      stepEls[i].className = 'done';
+      stepEls[i].textContent = `✓ ${data.name}`;
+      return data;
+    } catch (e) {
+      done++;
+      stepEls[i].className = 'fail';
+      stepEls[i].textContent = `✗ App ${i+1}: ${e.message}`;
+      return {
+        store: parsed.store,
+        name: `App ${i+1} (error)`,
+        error: e.message,
+        dev: null, icon: null,
+        rating: null, ratingCount: null,
+        price: null, priceVal: null,
+        category: null, version: null, updated: null, size: null,
+        ageRating: null, langs: null, partial: false,
+        url: parsed.store === 'ios'
+          ? `https://apps.apple.com/app/id${parsed.id}`
+          : `https://play.google.com/store/apps/details?id=${parsed.id}`
+      };
+    }
+  }));
+
+  // Keyword ranking
+  const kwRaw = document.getElementById('kw-input').value.trim();
+  const keywords = kwRaw
+    ? kwRaw.split(',').map(k => k.trim()).filter(k => k.length > 0).slice(0, 10)
+    : [];
+
+  let kwResults = [];
+  if (keywords.length > 0) {
+    ldTxt.textContent = `Checking ${keywords.length} keyword${keywords.length > 1 ? 's' : ''}…`;
+    const kwStep = document.createElement('li');
+    kwStep.className = 'active';
+    kwStep.textContent = `Searching keyword rankings…`;
+    ldSteps.appendChild(kwStep);
+
+    kwResults = await Promise.all(keywords.map(kw => fetchKeywordRanking(kw, apps, country)));
+
+    kwStep.className = 'done';
+    kwStep.textContent = `✓ Keyword rankings fetched`;
+  }
+
+  document.getElementById('loader').style.display = 'none';
+  goBtn.disabled = false;
+  renderAll(apps, kwResults);
+}
+</script>
+</body>
+</html>

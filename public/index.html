@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASO Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f4f6fb; --surface:#fff; --surface-2:#edf0f8;
+  --border:#dce2ef; --border-soft:#e8edf6;
+  --text:#0d1628; --text-2:#2c3d5a; --muted:#7889a6;
+  --accent:#2557d6; --accent-soft:#dce8ff; --accent-mid:rgba(37,87,214,.09);
+  --success:#15803d; --success-bg:#dcfce7;
+  --danger:#b91c1c; --danger-bg:#fee2e2;
+  --ios-bg:#e0f0ff; --ios-fg:#0066cc;
+  --android-bg:#dcfce7; --android-fg:#16a34a;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --bg:#050c17; --surface:#0b1526; --surface-2:#111f36;
+    --border:#1a2d48; --border-soft:#0e1c30;
+    --text:#e1e8f6; --text-2:#8da3c0; --muted:#475f7e;
+    --accent:#4d8af5; --accent-soft:#12244e; --accent-mid:rgba(77,138,245,.12);
+    --success:#4ade80; --success-bg:#052e16;
+    --danger:#fb7185; --danger-bg:#3b0a18;
+    --ios-bg:#0e2848; --ios-fg:#5aadff;
+    --android-bg:#082a18; --android-fg:#4ade80;
+    color-scheme:dark;
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;margin:0;padding:32px 20px;font-size:15px;line-height:1.6}
+.wrap{max-width:1160px;margin:0 auto}
+
+/* Header */
+.hdr{display:flex;align-items:center;gap:14px;margin-bottom:40px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+.hdr-logo{width:44px;height:44px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 14px rgba(37,87,214,.3)}
+.hdr-logo svg{width:24px;height:24px;fill:white}
+.hdr-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.03em;margin:0}
+.hdr-sub{font-size:13px;color:var(--muted);margin:0}
+
+/* Form inputs */
+.blk{margin-bottom:24px}
+.blk-title{font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;margin:0 0 3px;letter-spacing:-.01em}
+.blk-desc{font-size:13px;color:var(--muted);margin:0 0 11px}
+.url-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;transition:border-color .2s;margin-bottom:7px}
+.url-row:focus-within{border-color:var(--accent)}
+.url-row.yours{border-color:var(--accent);background:var(--accent-mid)}
+.row-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;min-width:80px;flex-shrink:0}
+.url-row.yours .row-lbl{color:var(--accent)}
+.url-field{flex:1;border:none;background:transparent;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text);outline:none;min-width:0}
+.url-field::placeholder{font-family:'DM Sans',sans-serif;color:var(--muted);font-size:13px}
+.plat{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;flex-shrink:0;white-space:nowrap}
+.plat.ios{background:var(--ios-bg);color:var(--ios-fg)}
+.plat.android{background:var(--android-bg);color:var(--android-fg)}
+.rm-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:2px;border-radius:4px;display:flex;align-items:center;flex-shrink:0;transition:color .15s}
+.rm-btn:hover{color:var(--danger)}
+.add-btn{display:flex;align-items:center;gap:8px;width:100%;background:var(--surface);border:1.5px dashed var(--border);border-radius:10px;padding:10px 13px;cursor:pointer;font-size:13.5px;color:var(--muted);font-family:'DM Sans',sans-serif;transition:border-color .2s,color .2s;margin-top:2px}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.add-btn:disabled{opacity:.4;pointer-events:none}
+
+/* Bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
+.bar-left{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ex-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 13px;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color .2s,color .2s;white-space:nowrap}
+.ex-btn:hover{border-color:var(--accent);color:var(--accent)}
+.go-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:10px 26px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity .2s;white-space:nowrap}
+.go-btn:hover{opacity:.88}
+.go-btn:disabled{opacity:.5;cursor:default}
+
+/* Toggle */
+.toggle-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-2);user-select:none}
+.toggle-track{position:relative;width:38px;height:22px;background:var(--border);border-radius:11px;transition:background .2s;flex-shrink:0}
+.toggle-track input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0}
+.toggle-track:has(input:checked){background:var(--accent)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle-track input:checked~.toggle-thumb{transform:translateX(16px)}
+
+/* Loader */
+.ld-wrap{text-align:center;padding:64px 20px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .72s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-txt{font-size:14px;color:var(--muted)}
+.ld-steps{list-style:none;padding:0;margin:12px 0 0;font-size:13px;color:var(--muted)}
+.ld-steps li{padding:2px 0}
+.ld-steps li.done{color:var(--success)}
+.ld-steps li.fail{color:var(--danger)}
+.ld-steps li.active{color:var(--accent)}
+
+/* Results */
+#results{display:none}
+.r-section{margin-bottom:36px}
+.r-h{font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em}
+
+/* App cards */
+.cards-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
+.app-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px;flex-shrink:0;width:200px;display:flex;flex-direction:column;gap:9px}
+.app-card.yours{border-color:var(--accent)}
+.card-top{display:flex;gap:10px;align-items:flex-start}
+.card-icon{width:52px;height:52px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--surface-2)}
+.card-icon-ph{width:52px;height:52px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.card-name{font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-dev{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap}
+.bdg{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.03em}
+.bdg.ios{background:var(--ios-bg);color:var(--ios-fg)}
+.bdg.android{background:var(--android-bg);color:var(--android-fg)}
+.bdg.yours{background:var(--accent-soft);color:var(--accent)}
+.card-rating{display:flex;align-items:center;gap:5px;font-size:13px}
+.stars{color:#f59e0b;font-size:12px;letter-spacing:-.5px}
+.rval{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}
+.rct{font-size:12px;color:var(--muted)}
+.card-link{font-size:12px;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px}
+.card-link:hover{text-decoration:underline}
+.card-err{font-size:12px;color:var(--danger);background:var(--danger-bg);border-radius:6px;padding:5px 8px}
+
+/* Charts */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:36px}
+@media(max-width:640px){.chart-grid{grid-template-columns:1fr}}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+.chart-title{font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:600;margin:0 0 12px;letter-spacing:-.01em}
+.chart-inner{position:relative;height:190px}
+
+/* Metrics table */
+.tbl-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:14px}
+table.cmp{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.cmp th{background:var(--surface-2);padding:9px 15px;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;text-align:left}
+.cmp th:first-child{position:sticky;left:0;z-index:2}
+.cmp td{padding:10px 15px;border-bottom:1px solid var(--border-soft);vertical-align:middle;color:var(--text)}
+.cmp td:first-child{position:sticky;left:0;background:var(--bg);font-size:12.5px;color:var(--text-2);font-weight:500;white-space:nowrap;z-index:1;border-right:1px solid var(--border-soft)}
+.cmp tr:last-child td{border-bottom:none}
+.cmp tr:hover td{background:var(--surface-2)}
+.cmp tr:hover td:first-child{background:var(--surface-2)}
+.pill{display:inline;font-family:'JetBrains Mono',monospace;font-size:12px;padding:2px 8px;border-radius:5px}
+.pill.best{background:var(--success-bg);color:var(--success);font-weight:600}
+.pill.worst{background:var(--danger-bg);color:var(--danger)}
+.null-val{color:var(--muted);font-style:italic}
+.win-row td{background:var(--surface-2)!important;font-weight:600}
+.win-chip{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--success-bg);color:var(--success);margin-right:4px}
+.note{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:10px}
+
+/* Keyword rank badges */
+.kw-rank{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.kw-rank.top3{background:#fef3c7;color:#78350f}
+.kw-rank.top10{background:var(--success-bg);color:var(--success)}
+.kw-rank.top50{background:var(--accent-soft);color:var(--accent)}
+.kw-rank.low{background:var(--surface-2);color:var(--text-2)}
+@media(prefers-color-scheme:dark){.kw-rank.top3{background:#3b1a00;color:#fbbf24}}
+
+/* Keyword table */
+.kw-tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px}
+table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.kw-tbl th{background:var(--surface-2);padding:8px 12px;border-bottom:1px solid var(--border);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap;text-align:left}
+.kw-tbl th.center{text-align:center}
+.kw-tbl td{padding:8px 12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
+.kw-tbl tr:last-child td{border-bottom:none}
+.kw-tbl tr:hover td{background:var(--surface-2)}
+.kw-kw{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;white-space:nowrap}
+.kw-rank-cell{text-align:center}
+.kw-icons{display:flex;flex-wrap:nowrap;gap:3px;align-items:center}
+.kw-ico-link{display:inline-flex;flex-shrink:0;border-radius:6px;overflow:hidden;transition:transform .12s,box-shadow .12s}
+.kw-ico-link:hover{transform:scale(1.25);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:1;position:relative}
+.kw-ico-link.mine{outline:2px solid var(--accent);border-radius:6px}
+.kw-ico-img{width:26px;height:26px;display:block;object-fit:cover}
+.kw-ico-ph{width:26px;height:26px;display:flex;align-items:center;justify-content:center;background:var(--surface-2);font-size:12px}
+
+/* Export button */
+.export-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:7px 13px;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer;transition:border-color .2s,color .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.export-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Health score */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.health-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:16px}
+.health-card.yours{border-color:var(--accent)}
+.health-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.health-name{font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;color:var(--text);line-height:1.3;max-width:130px}
+.health-grade{font-family:'Outfit',sans-serif;font-size:30px;font-weight:800;line-height:1}
+.health-score-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border-soft)}
+.health-score-num{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;min-width:40px}
+.health-bar-wrap{flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden}
+.health-bar{height:100%;border-radius:3px}
+.health-row{margin-bottom:7px}
+.health-row-label{font-size:10.5px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.health-row-right{display:flex;align-items:center;gap:6px}
+.health-mini-wrap{width:44px;height:3px;background:var(--surface-2);border-radius:2px;overflow:hidden;flex-shrink:0}
+.health-mini{height:100%;border-radius:2px}
+.health-row-pts{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-2);min-width:28px;flex-shrink:0}
+.health-row-det{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Keyword gap */
+.gap-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+.gap-kw{font-weight:600;font-size:13.5px;min-width:130px}
+.gap-badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gap-yours{font-size:11.5px;padding:2px 9px;border-radius:6px;background:var(--danger-bg);color:var(--danger);font-weight:600;font-family:'JetBrains Mono',monospace}
+.gap-comp{font-size:11.5px;padding:2px 9px;border-radius:6px;background:var(--success-bg);color:var(--success);font-weight:600;font-family:'JetBrains Mono',monospace}
+.gap-comp-name{font-size:11px;color:var(--muted)}
+
+/* LM Studio section */
+.llm-section{margin-top:8px;padding-top:32px;border-top:1px solid var(--border)}
+.llm-connect-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.llm-url-input{flex:1;min-width:200px;font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s}
+.llm-url-input:focus{border-color:var(--accent)}
+.llm-btn{font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.llm-btn:disabled{opacity:.45;cursor:default}
+.llm-btn.primary{background:var(--accent);color:#fff}
+.llm-btn.primary:hover:not(:disabled){opacity:.85}
+.llm-btn.secondary{background:var(--surface-2);color:var(--text-2);border:1.5px solid var(--border)}
+.llm-btn.secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.llm-status{font-size:12.5px;padding:6px 10px;border-radius:7px;display:none}
+.llm-status.ok{display:block;background:var(--success-bg);color:var(--success)}
+.llm-status.err{display:block;background:var(--danger-bg);color:var(--danger)}
+.llm-model-row{display:none;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.llm-model-sel{font-family:'DM Sans',sans-serif;font-size:13.5px;padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none;cursor:pointer;flex:1;min-width:200px}
+.llm-output-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;min-height:80px;display:none}
+.llm-output{font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap;word-break:break-word}
+
+@media(max-width:560px){
+  .bar{flex-direction:column;align-items:stretch}
+  .go-btn{justify-content:center}
+  .bar-left{flex-direction:column;align-items:flex-start;gap:8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hdr">
+    <div class="hdr-logo">
+      <svg viewBox="0 0 24 24"><rect x="2" y="13" width="4" height="8" rx="1"/><rect x="9" y="8" width="4" height="13" rx="1"/><rect x="16" y="3" width="4" height="18" rx="1"/></svg>
+    </div>
+    <div>
+      <h1 class="hdr-title">ASO Analyzer</h1>
+      <p class="hdr-sub">Compare app store metrics against competitors — no API key required</p>
+    </div>
+  </header>
+
+  <div>
+    <div class="blk">
+      <p class="blk-title">Your App</p>
+      <p class="blk-desc">Paste your App Store or Google Play URL</p>
+      <div class="url-row yours">
+        <span class="row-lbl">Your App</span>
+        <input class="url-field" id="your-url" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false">
+        <span class="plat" id="your-plat"></span>
+      </div>
+    </div>
+
+    <div class="blk">
+      <p class="blk-title">Competitors</p>
+      <p class="blk-desc">Add up to 4 competitor apps</p>
+      <div id="comp-list"></div>
+      <button class="add-btn" id="add-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+        Add competitor
+      </button>
+    </div>
+
+    <div class="bar">
+      <div class="bar-left">
+        <label class="toggle-label">
+          <span class="toggle-track">
+            <input type="checkbox" id="kw-toggle" checked>
+            <span class="toggle-thumb"></span>
+          </span>
+          Keyword Rankings
+        </label>
+        <button class="ex-btn" id="ex-btn">Try example: Language apps</button>
+      </div>
+      <button class="go-btn" id="go-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analyze Apps
+      </button>
+    </div>
+  </div>
+
+  <div id="loader" style="display:none">
+    <div class="ld-wrap">
+      <div class="spinner"></div>
+      <p class="ld-txt" id="ld-txt">Fetching app data…</p>
+      <ul class="ld-steps" id="ld-steps"></ul>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="r-section">
+      <p class="r-h">Apps Compared</p>
+      <div class="cards-row" id="app-cards"></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <p class="chart-title">Overall Rating</p>
+        <div class="chart-inner"><canvas id="chart-r"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <p class="chart-title">Number of Ratings</p>
+        <div class="chart-inner"><canvas id="chart-n"></canvas></div>
+      </div>
+    </div>
+    <div class="r-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <p class="r-h" style="margin:0">Metric Comparison</p>
+        <button class="export-btn" onclick="exportCSV()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Export CSV
+        </button>
+      </div>
+      <div class="tbl-scroll">
+        <table class="cmp"><thead id="cmp-head"></thead><tbody id="cmp-body"></tbody></table>
+      </div>
+      <p class="note" id="android-note" style="display:none">ℹ️ Google Play data from the public store page. Version, size, last-updated not always available.</p>
+    </div>
+
+    <div class="r-section" id="health-section" style="display:none">
+      <p class="r-h">ASO Health Score</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">0–100 score across rating quality, social proof, keyword coverage, update freshness, and localization reach.</p>
+      <div class="health-grid" id="health-cards"></div>
+    </div>
+
+    <div class="r-section" id="kw-results-section" style="display:none">
+      <p class="r-h">Keyword Rankings</p>
+      <div id="kw-cards"></div>
+    </div>
+
+    <div class="r-section" id="gap-section" style="display:none">
+      <p class="r-h">Keyword Gaps</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Keywords where competitors appear in top 10 but your app doesn't — direct ranking opportunities.</p>
+      <div id="gap-list"></div>
+    </div>
+
+    <div class="llm-section">
+      <p class="r-h" style="margin-bottom:6px">AI Analysis</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Connect to a local LLM (LM Studio, Ollama, or any OpenAI-compatible server) for competitive analysis and ASO suggestions.</p>
+      <div class="llm-connect-row">
+        <input class="llm-url-input" id="llm-url" type="url" value="http://localhost:1234/v1" spellcheck="false">
+        <button class="llm-btn secondary" id="llm-connect-btn" onclick="connectLLM()">Connect</button>
+      </div>
+      <div class="llm-status" id="llm-status"></div>
+      <div class="llm-model-row" id="llm-model-row">
+        <select class="llm-model-sel" id="llm-model-sel"></select>
+        <select class="llm-model-sel" id="llm-mode-sel" style="flex:none;width:auto;min-width:180px">
+          <option value="competitive">Competitive Analysis</option>
+          <option value="keywords">Keyword Strategy</option>
+          <option value="description">Rewrite My Description</option>
+          <option value="metadata">Metadata Optimization</option>
+          <option value="positioning">Positioning &amp; Differentiation</option>
+        </select>
+        <button class="llm-btn primary" id="llm-analyze-btn" onclick="analyzeWithLLM()">Get AI Analysis</button>
+      </div>
+      <div class="llm-output-wrap" id="llm-output-wrap">
+        <div class="llm-output" id="llm-output"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#4d8af5','#22c55e','#f59e0b','#a78bfa','#f43f5e'];
+const COUNTRY = 'us';
+
+let compCount = 0, chartR = null, chartN = null;
+let lastApps = null, lastKwResults = null;
+
+// ── Helpers ──
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_,r) => setTimeout(() => r(new Error('Timed out')), ms))]);
+}
+function fmtBytes(b) { const m = b/1048576; return m >= 1000 ? `${(m/1024).toFixed(1)} GB` : `${m.toFixed(0)} MB`; }
+function fmtNum(n) {
+  if (n == null) return null;
+  if (n >= 1e9) return `${(n/1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `${(n/1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `${(n/1e3).toFixed(0)}K`;
+  return n.toLocaleString();
+}
+function fmtDate(d) {
+  if (!d) return null;
+  const days = Math.floor((Date.now()-d)/86400000);
+  if (days < 1) return 'Today';
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days/7)}w ago`;
+  if (days < 365) return `${Math.floor(days/30)}mo ago`;
+  return `${Math.floor(days/365)}y ago`;
+}
+function stars(r) {
+  if (!r) return '';
+  const f = Math.floor(r), h = r%1>=.5?1:0, e = 5-f-h;
+  return '★'.repeat(f)+(h?'½':'')+'☆'.repeat(e);
+}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function isDark() { return window.matchMedia('(prefers-color-scheme:dark)').matches; }
+
+// ── URL parsing ──
+function parseUrl(raw) {
+  try {
+    const u = new URL(raw.trim()), h = u.hostname.toLowerCase();
+    if (h==='apps.apple.com'||h==='itunes.apple.com') {
+      const m = u.pathname.match(/\/id(\d+)/);
+      const id = m ? m[1] : u.searchParams.get('id');
+      if (id) return { store:'ios', id };
+    }
+    if (h==='play.google.com') { const id = u.searchParams.get('id'); if (id) return { store:'android', id }; }
+  } catch(_) {}
+  return null;
+}
+function detectPlatform(val) {
+  try { const h = new URL(val.trim()).hostname.toLowerCase(); if (h==='apps.apple.com'||h==='itunes.apple.com') return 'ios'; if (h==='play.google.com') return 'android'; } catch(_) {}
+  return null;
+}
+function setPlatBadge(el, val) {
+  const p = detectPlatform(val);
+  if (p==='ios') { el.textContent='🍎 iOS'; el.className='plat ios'; }
+  else if (p==='android') { el.textContent='🤖 Android'; el.className='plat android'; }
+  else { el.textContent=''; el.className='plat'; }
+}
+
+// ── App Store ──
+async function fetchiOS(id) {
+  let res;
+  try { res = await withTimeout(fetch(`https://itunes.apple.com/lookup?id=${id}&country=${COUNTRY}&entity=software`), 12000); }
+  catch(e) { throw new Error(`App Store: ${e.message}`); }
+  if (!res.ok) throw new Error(`App Store HTTP ${res.status}`);
+  const j = await res.json();
+  if (!j.results?.length) throw new Error('App not found on App Store');
+  const a = j.results[0];
+  return {
+    store:'ios', trackId:String(a.trackId), name:a.trackName, dev:a.sellerName,
+    icon:a.artworkUrl512||a.artworkUrl100,
+    rating:a.averageUserRating??null, ratingCount:a.userRatingCount??null,
+    price:a.price===0?'Free':`$${a.price.toFixed(2)}`, priceVal:a.price??0,
+    category:a.primaryGenreName??null, version:a.version??null,
+    updated:a.currentVersionReleaseDate?new Date(a.currentVersionReleaseDate):null,
+    size:a.fileSizeBytes?fmtBytes(+a.fileSizeBytes):null,
+    ageRating:a.contentAdvisoryRating??null, langs:a.languageCodesISO2A?.length??null,
+    description:a.description??null, url:a.trackViewUrl, partial:false
+  };
+}
+
+// ── Play Store ──
+async function fetchAndroid(id, onStatus) {
+  const playUrl = `https://play.google.com/store/apps/details?id=${encodeURIComponent(id)}&hl=en&gl=us`;
+  onStatus?.('Fetching Play Store…');
+  try {
+    const r = await withTimeout(fetch(`/proxy?url=${encodeURIComponent(playUrl)}`), 22000);
+    if (r.ok) { const html = await r.text(); if (html.length > 800) return parsePlayHtml(html, id); }
+    throw new Error(`Server returned HTTP ${r.status}`);
+  } catch(e) { throw new Error(`Google Play fetch failed: ${e.message}`); }
+}
+function parsePlayHtml(html, id) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  let ld = null;
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
+    try { const p = JSON.parse(s.textContent); if (p['@type']==='SoftwareApplication') ld = p; } catch(_) {}
+  });
+  const og = prop => doc.querySelector(`meta[property="${prop}"]`)?.getAttribute('content')||null;
+  const rawTitle = ld?.name||og('og:title')||'';
+  const name = rawTitle.replace(/\s*[-–]\s*Apps on Google Play\s*$/i,'').replace(/\s*[-–]\s*Google Play\s*$/i,'').trim()||`App (${id})`;
+  const rating = ld?.aggregateRating?.ratingValue ? parseFloat(ld.aggregateRating.ratingValue) : null;
+  const ratingCount = ld?.aggregateRating?.ratingCount ? parseInt(ld.aggregateRating.ratingCount) : null;
+  const dev = ld?.author?.name||null;
+  let cat = ld?.applicationCategory||null;
+  if (cat) cat = cat.replace(/Application$/,'').trim()||cat;
+  const priceStr = ld?.offers?.price;
+  const price = (priceStr==='0'||priceStr==='0.0')?'Free':priceStr?`$${parseFloat(priceStr).toFixed(2)}`:null;
+  return {
+    store:'android', packageId:id, name, dev, icon:og('og:image'),
+    rating:isNaN(rating)?null:rating, ratingCount:isNaN(ratingCount)?null:ratingCount,
+    price, priceVal:priceStr?parseFloat(priceStr):0, category:cat,
+    description:ld?.description||og('og:description')||null,
+    version:null, updated:null, size:null, ageRating:null, langs:null,
+    url:`https://play.google.com/store/apps/details?id=${id}`, partial:true
+  };
+}
+
+// ── Keyword extraction ──
+const STOP = new Set(['a','an','the','and','or','but','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','could','should','may','might','shall','can','to','of','in','on','at','by','for','with','about','from','up','out','over','not','only','so','than','too','very','just','any','all','both','each','more','most','some','such','no','same','this','that','these','those','it','its','we','you','he','she','they','i','me','him','her','us','them','what','which','who','my','your','his','our','their','via','app','apps','get','use','new','free','now','also','like','make','help','every','never','always','easy','best','many','much','even','well','good','great','let','way','time','day','see','find','using','used','one','two','three','feature','features','support','device','devices','download','available','version','update','access','simply','powerful','allows','designed','offer','offers','provides','provide','including','without','within','whether','while','need','needs','want','keep','take','give','work','works','set','put','right','left','full','high','low','come','go','show','add','bit','per','now','just','make','made']);
+
+function extractKeywords(apps, limit=20) {
+  const tokens=[], biSrc=[];
+  for (const app of apps) {
+    for (const [text, weight] of [[app.name,6],[app.category,3],[app.description,1]]) {
+      if (!text) continue;
+      const words = text.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>=3&&!STOP.has(w)&&!/^\d+$/.test(w));
+      for (let r=0;r<weight;r++) tokens.push(...words);
+      biSrc.push(...words);
+    }
+  }
+  const freq={};
+  for (const w of tokens) freq[w]=(freq[w]||0)+1;
+  const bifreq={};
+  for (let i=0;i<biSrc.length-1;i++) { const b=`${biSrc[i]} ${biSrc[i+1]}`; bifreq[b]=(bifreq[b]||0)+1; }
+  const scored=[
+    ...Object.entries(freq).filter(([,c])=>c>=2).map(([w,c])=>({kw:w,score:c})),
+    ...Object.entries(bifreq).filter(([,c])=>c>=2).map(([b,c])=>({kw:b,score:c*2})),
+  ].sort((a,b)=>b.score-a.score);
+  const used=new Set(), result=[];
+  for (const {kw} of scored) {
+    if (result.length>=limit) break;
+    const parts=kw.split(' ');
+    if (parts.length===1&&parts.some(p=>used.has(p))) continue;
+    result.push(kw);
+    parts.forEach(p=>used.add(p));
+  }
+  return result;
+}
+
+// ── Keyword ranking ──
+async function fetchKeywordRanking(keyword, apps) {
+  const ranks = apps.map(()=>({pos:null,error:false}));
+  let iosTop=[], androidTop=[];
+  const hasIOS = apps.some(a=>a.store==='ios'&&a.trackId);
+  const hasAndroid = apps.some(a=>a.store==='android'&&a.packageId);
+
+  await Promise.all([
+    hasIOS ? (async()=>{
+      try {
+        const res = await withTimeout(fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(keyword)}&entity=software&limit=200&country=${COUNTRY}`),12000);
+        if (!res.ok) return;
+        const data = await res.json();
+        const results = data.results||[];
+        iosTop = results.slice(0,10).map((r,i)=>({name:r.trackName,trackId:String(r.trackId),icon:r.artworkUrl60||r.artworkUrl100,pos:i+1}));
+        const ids = results.map(r=>String(r.trackId));
+        apps.forEach((a,i)=>{ if(a.store==='ios'&&a.trackId){const p=ids.indexOf(a.trackId);ranks[i].pos=p>=0?p+1:null;} });
+      } catch(_) { apps.forEach((a,i)=>{ if(a.store==='ios') ranks[i].error=true; }); }
+    })() : Promise.resolve(),
+
+    hasAndroid ? (async()=>{
+      try {
+        const r = await withTimeout(fetch(`/proxy?url=${encodeURIComponent(`https://play.google.com/store/search?q=${encodeURIComponent(keyword)}&c=apps&hl=en&gl=us`)}`),18000);
+        if (!r.ok) { apps.forEach((a,i)=>{if(a.store==='android')ranks[i].error=true;}); return; }
+        const html = await r.text();
+        const seen=new Set(), all=[];
+        // Try aria-label for names
+        const ariaRe=/href="\/store\/apps\/details\?id=([a-zA-Z0-9._]+)"[^>]*aria-label="([^"]+)"/g;
+        let m;
+        while((m=ariaRe.exec(html))!==null) { if(!seen.has(m[1])){ seen.add(m[1]); all.push({packageId:m[1],name:m[2].replace(/\s*[-–].*/,'').trim()}); } }
+        // Fallback: just IDs
+        if(all.length<5){ const idRe=/\/store\/apps\/details\?id=([a-zA-Z0-9._]+)/g; while((m=idRe.exec(html))!==null){ if(!seen.has(m[1])){ seen.add(m[1]); all.push({packageId:m[1],name:null}); } } }
+        androidTop = all.slice(0,10).map((a,i)=>({...a,pos:i+1}));
+        const pkgs = all.map(a=>a.packageId);
+        apps.forEach((a,i)=>{ if(a.store==='android'&&a.packageId){const p=pkgs.indexOf(a.packageId);ranks[i].pos=p>=0?p+1:null;} });
+      } catch(_) { apps.forEach((a,i)=>{ if(a.store==='android') ranks[i].error=true; }); }
+    })() : Promise.resolve()
+  ]);
+
+  return {keyword,ranks,iosTop,androidTop};
+}
+
+// ── Render ──
+function renderAll(apps, kwResults=[]) {
+  lastApps=apps; lastKwResults=kwResults;
+  renderCards(apps);
+  renderCharts(apps);
+  renderTable(apps);
+  renderHealthScore(apps, kwResults);
+  kwResults.length>0 ? renderKeywordCards(apps,kwResults) : (document.getElementById('kw-results-section').style.display='none');
+  renderKeywordGaps(apps, kwResults);
+  document.getElementById('android-note').style.display=apps.some(a=>a.store==='android')?'block':'none';
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderCards(apps) {
+  const el=document.getElementById('app-cards'); el.innerHTML='';
+  apps.forEach((a,i)=>{
+    const card=document.createElement('div'); card.className='app-card'+(i===0?' yours':'');
+    card.innerHTML=`<div class="card-top">${a.icon?`<img class="card-icon" src="${esc(a.icon)}" alt="" onerror="this.outerHTML='<div class=\\'card-icon-ph\\'>${a.store==='ios'?'🍎':'🤖'}</div>'">`:`<div class="card-icon-ph">${a.store==='ios'?'🍎':'🤖'}</div>`}<div style="min-width:0"><div class="card-name">${esc(a.name)}</div>${a.dev?`<div class="card-dev">${esc(a.dev)}</div>`:''}</div></div><div class="card-tags"><span class="bdg ${a.store}">${a.store==='ios'?'🍎 iOS':'🤖 Android'}</span>${i===0?'<span class="bdg yours">Your App</span>':''}</div>${a.error?`<div class="card-err">⚠ ${esc(a.error)}</div>`:''}${a.rating!=null?`<div class="card-rating"><span class="stars">${stars(a.rating)}</span><span class="rval">${a.rating.toFixed(1)}</span>${a.ratingCount!=null?`<span class="rct">(${fmtNum(a.ratingCount)})</span>`:''}</div>`:''}<a class="card-link" href="${esc(a.url)}" target="_blank" rel="noopener">View in store ↗</a>`;
+    el.appendChild(card);
+  });
+}
+
+function renderCharts(apps) {
+  if(chartR) chartR.destroy(); if(chartN) chartN.destroy();
+  const labels=apps.map(a=>a.name.length>16?a.name.slice(0,14)+'…':a.name);
+  const colors=COLORS.slice(0,apps.length), dark=isDark();
+  const tc=dark?'#8da3c0':'#7889a6', gc=dark?'#1a2d48':'#dce2ef';
+  const base=(yMax,cb)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:yMax,ticks:{color:tc,callback:cb},grid:{color:gc},border:{color:'transparent'}},x:{ticks:{color:tc},grid:{display:false},border:{color:'transparent'}}}});
+  chartR=new Chart(document.getElementById('chart-r'),{type:'bar',data:{labels,datasets:[{data:apps.map(a=>a.rating??0),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},options:base(5,v=>`${v}★`)});
+  chartN=new Chart(document.getElementById('chart-n'),{type:'bar',data:{labels,datasets:[{data:apps.map(a=>a.ratingCount??0),backgroundColor:colors,borderRadius:6,borderSkipped:false}]},options:base(undefined,v=>fmtNum(v))});
+}
+
+function renderTable(apps) {
+  const thead=document.getElementById('cmp-head'), tbody=document.getElementById('cmp-body');
+  const hr=document.createElement('tr');
+  hr.innerHTML='<th>Metric</th>'+apps.map((a,i)=>`<th style="${i===0?'background:var(--accent-mid);color:var(--accent)':''}">${esc(a.name.length>18?a.name.slice(0,16)+'…':a.name)}</th>`).join('');
+  thead.innerHTML=''; thead.appendChild(hr);
+  const metrics=[
+    {label:'📱 Platform',get:a=>a.store,fmt:v=>v==='ios'?'🍎 iOS':'🤖 Android',cmp:null},
+    {label:'⭐ Rating',get:a=>a.rating,fmt:v=>v!=null?`${v.toFixed(2)} <span style="color:#f59e0b;font-size:11px">${stars(v)}</span>`:null,cmp:'higher'},
+    {label:'💬 Total Ratings',get:a=>a.ratingCount,fmt:v=>v!=null?v.toLocaleString():null,cmp:'higher'},
+    {label:'💰 Price',get:a=>a.priceVal,fmt:(_,a)=>a.price,cmp:'lower'},
+    {label:'🏷️ Category',get:a=>a.category,fmt:v=>v,cmp:null},
+    {label:'👤 Developer',get:a=>a.dev,fmt:v=>v,cmp:null},
+    {label:'🔢 Version',get:a=>a.version,fmt:v=>v,cmp:null},
+    {label:'📅 Last Updated',get:a=>a.updated?.getTime()??null,fmt:(_,a)=>fmtDate(a.updated),cmp:'higher'},
+    {label:'📦 Size',get:a=>a.size,fmt:v=>v,cmp:null},
+    {label:'🔞 Age Rating',get:a=>a.ageRating,fmt:v=>v,cmp:null},
+    {label:'🌍 Languages',get:a=>a.langs,fmt:v=>v!=null?`${v}`:null,cmp:'higher'},
+  ];
+  const wins=new Array(apps.length).fill(0); tbody.innerHTML='';
+  for (const m of metrics) {
+    const vals=apps.map(a=>m.get(a)); let bestI=null, worstI=null;
+    if (m.cmp) {
+      const valid=vals.map((v,i)=>({v,i})).filter(x=>x.v!=null);
+      if(valid.length>=2&&new Set(valid.map(x=>x.v)).size>1){
+        if(m.cmp==='higher'){bestI=valid.reduce((a,b)=>a.v>=b.v?a:b).i;worstI=valid.reduce((a,b)=>a.v<=b.v?a:b).i;}
+        else{bestI=valid.reduce((a,b)=>a.v<=b.v?a:b).i;worstI=valid.reduce((a,b)=>a.v>=b.v?a:b).i;}
+        if(bestI!=null) wins[bestI]++;
+      }
+    }
+    const tr=document.createElement('tr');
+    const cells=apps.map((a,i)=>{const disp=m.fmt(vals[i],a);if(!disp)return`<td><span class="null-val">—</span></td>`;let cls='';if(bestI===i&&worstI!==i)cls='pill best';else if(worstI===i&&bestI!==i)cls='pill worst';return`<td>${cls?`<span class="${cls}">${disp}</span>`:disp}</td>`;}).join('');
+    tr.innerHTML=`<td>${m.label}</td>${cells}`; tbody.appendChild(tr);
+  }
+  const maxW=Math.max(...wins), wr=document.createElement('tr'); wr.className='win-row';
+  wr.innerHTML='<td>🏆 Score</td>'+apps.map((_,i)=>`<td>${wins[i]===maxW&&maxW>0?'<span class="win-chip">Winner</span>':''}<span style="color:var(--muted);font-size:12px">${wins[i]} win${wins[i]!==1?'s':''}</span></td>`).join('');
+  tbody.appendChild(wr);
+}
+
+function renderKeywordCards(apps, kwResults) {
+  const sec=document.getElementById('kw-results-section'), container=document.getElementById('kw-cards');
+  container.innerHTML='';
+  const hasIOS=apps.some(a=>a.store==='ios'), hasAndroid=apps.some(a=>a.store==='android');
+  const trackedIos=new Set(apps.filter(a=>a.store==='ios'&&a.trackId).map(a=>a.trackId));
+  const trackedAnd=new Set(apps.filter(a=>a.store==='android'&&a.packageId).map(a=>a.packageId));
+
+  const wrap=document.createElement('div'); wrap.className='kw-tbl-wrap';
+  const tbl=document.createElement('table'); tbl.className='kw-tbl';
+
+  // Header
+  let headCols='<th>Keyword</th>';
+  apps.forEach(a=>{ headCols+=`<th class="center">${esc(a.name.length>12?a.name.slice(0,10)+'…':a.name)} ${a.store==='ios'?'🍎':'🤖'}</th>`; });
+  if(hasIOS) headCols+='<th>Top 🍎 Apps</th>';
+  if(hasAndroid) headCols+='<th>Top 🤖 Apps</th>';
+  tbl.innerHTML=`<thead><tr>${headCols}</tr></thead>`;
+  const tbody=document.createElement('tbody');
+
+  const makeIcons=(items, isIos)=>items.slice(0,10).map(a=>{
+    const isMine=isIos?trackedIos.has(a.trackId):trackedAnd.has(a.packageId);
+    const name=isIos?a.name:(a.name||a.packageId);
+    const link=isIos?`https://apps.apple.com/app/id${a.trackId}`:`https://play.google.com/store/apps/details?id=${a.packageId}`;
+    const pos=a.pos;
+    const title=`${pos ? '#'+pos+' ' : ''}${name}`;
+    const iconEl=isIos&&a.icon
+      ?`<img class="kw-ico-img" src="${esc(a.icon)}" alt="${esc(name)}" loading="lazy">`
+      :`<div class="kw-ico-ph">${isIos?'🍎':'🤖'}</div>`;
+    return `<a class="kw-ico-link${isMine?' mine':''}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(title)}">${iconEl}</a>`;
+  }).join('');
+
+  for (const {keyword,ranks,iosTop,androidTop} of kwResults) {
+    const tr=document.createElement('tr');
+    let cells=`<td class="kw-kw">${esc(keyword)}</td>`;
+    apps.forEach((_,i)=>{
+      const r=ranks[i];
+      if(!r||r.error){cells+='<td class="kw-rank-cell"><span class="null-val">err</span></td>';return;}
+      const pos=r.pos, cls=pos==null?'low':pos<=3?'top3':pos<=10?'top10':pos<=50?'top50':'low';
+      cells+=`<td class="kw-rank-cell">${pos!=null?`<span class="kw-rank ${cls}">#${pos}</span>`:`<span class="null-val">—</span>`}</td>`;
+    });
+    if(hasIOS) cells+=`<td><div class="kw-icons">${makeIcons(iosTop||[],true)}</div></td>`;
+    if(hasAndroid) cells+=`<td><div class="kw-icons">${makeIcons(androidTop||[],false)}</div></td>`;
+    tr.innerHTML=cells;
+    tbody.appendChild(tr);
+  }
+
+  tbl.appendChild(tbody); wrap.appendChild(tbl); container.appendChild(wrap);
+  sec.style.display='block';
+}
+
+// ── Competitor rows ──
+function makeCompRow(n) {
+  const div=document.createElement('div'); div.className='url-row';
+  const badge=document.createElement('span'); badge.className='plat';
+  div.innerHTML=`<span class="row-lbl">Comp. ${n}</span><input class="url-field comp-field" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false"><button class="rm-btn" title="Remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+  div.insertBefore(badge, div.querySelector('.rm-btn'));
+  div.querySelector('.comp-field').addEventListener('input',function(){setPlatBadge(badge,this.value);});
+  div.querySelector('.rm-btn').addEventListener('click',()=>{ div.remove(); reNumberComps(); compCount--; updateAddBtn(); });
+  return div;
+}
+function reNumberComps() {
+  document.querySelectorAll('#comp-list .url-row').forEach((r,i)=>r.querySelector('.row-lbl').textContent=`Comp. ${i+1}`);
+  compCount=document.querySelectorAll('#comp-list .url-row').length;
+}
+function updateAddBtn() { document.getElementById('add-btn').disabled=compCount>=4; }
+
+document.getElementById('add-btn').addEventListener('click',()=>{ if(compCount>=4)return; compCount++; document.getElementById('comp-list').appendChild(makeCompRow(compCount)); updateAddBtn(); });
+document.getElementById('your-url').addEventListener('input',function(){setPlatBadge(document.getElementById('your-plat'),this.value);});
+document.getElementById('ex-btn').addEventListener('click',()=>{
+  document.getElementById('your-url').value='https://apps.apple.com/us/app/duolingo/id570060128';
+  setPlatBadge(document.getElementById('your-plat'),document.getElementById('your-url').value);
+  document.getElementById('comp-list').innerHTML=''; compCount=0;
+  ['https://apps.apple.com/us/app/babbel/id829587759','https://play.google.com/store/apps/details?id=air.com.rosettastone.mobile.CoursePlayer'].forEach(url=>{
+    compCount++; const row=makeCompRow(compCount); row.querySelector('.comp-field').value=url; setPlatBadge(row.querySelector('.plat'),url); document.getElementById('comp-list').appendChild(row);
+  });
+  updateAddBtn();
+});
+
+// ── Analyze ──
+document.getElementById('go-btn').addEventListener('click',analyze);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))analyze();});
+
+async function analyze() {
+  const yourRaw=document.getElementById('your-url').value.trim(), yourParsed=parseUrl(yourRaw);
+  if(!yourRaw||!yourParsed){alert('Please enter a valid App Store or Google Play URL for your app.');return;}
+  const toFetch=[{parsed:yourParsed}];
+  document.querySelectorAll('.comp-field').forEach(f=>{const p=parseUrl(f.value.trim());if(p)toFetch.push({parsed:p});});
+  const goBtn=document.getElementById('go-btn'); goBtn.disabled=true;
+  document.getElementById('results').style.display='none';
+  document.getElementById('loader').style.display='block';
+  const ldTxt=document.getElementById('ld-txt'), ldSteps=document.getElementById('ld-steps');
+  ldSteps.innerHTML='';
+  const stepEls=toFetch.map((_,i)=>{const li=document.createElement('li');li.textContent=`App ${i+1}…`;ldSteps.appendChild(li);return li;});
+  let done=0; ldTxt.textContent=`Fetching ${toFetch.length} app${toFetch.length>1?'s':''}…`;
+
+  const apps=await Promise.all(toFetch.map(async({parsed},i)=>{
+    stepEls[i].className='active'; stepEls[i].textContent=`App ${i+1}: fetching…`;
+    try {
+      const onStatus=msg=>{stepEls[i].textContent=`App ${i+1}: ${msg}`;};
+      const data=parsed.store==='ios'?await fetchiOS(parsed.id):await fetchAndroid(parsed.id,onStatus);
+      done++; ldTxt.textContent=`Fetched ${done}/${toFetch.length}…`; stepEls[i].className='done'; stepEls[i].textContent=`✓ ${data.name}`;
+      return data;
+    } catch(e) {
+      done++; stepEls[i].className='fail'; stepEls[i].textContent=`✗ App ${i+1}: ${e.message}`;
+      return {store:parsed.store,name:`App ${i+1} (error)`,error:e.message,dev:null,icon:null,rating:null,ratingCount:null,price:null,priceVal:null,category:null,version:null,updated:null,size:null,ageRating:null,langs:null,description:null,partial:false,url:parsed.store==='ios'?`https://apps.apple.com/app/id${parsed.id}`:`https://play.google.com/store/apps/details?id=${parsed.id}`};
+    }
+  }));
+
+  let kwResults=[];
+  if(document.getElementById('kw-toggle').checked) {
+    const keywords=extractKeywords(apps);
+    if(keywords.length>0) {
+      ldTxt.textContent=`Checking ${keywords.length} keywords…`;
+      const kwStep=document.createElement('li'); kwStep.className='active'; kwStep.textContent='Fetching keyword rankings…'; ldSteps.appendChild(kwStep);
+      kwResults=await Promise.all(keywords.map(kw=>fetchKeywordRanking(kw,apps)));
+      kwStep.className='done'; kwStep.textContent=`✓ Keyword rankings fetched`;
+    }
+  }
+
+  document.getElementById('loader').style.display='none'; goBtn.disabled=false;
+  renderAll(apps,kwResults);
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  if(!lastApps){alert('Run an analysis first.');return;}
+  const rows=[];
+  rows.push(['Metric',...lastApps.map(a=>a.name)]);
+  const metrics=[
+    {label:'Store',get:a=>a.store==='ios'?'iOS App Store':'Google Play'},
+    {label:'Rating',get:a=>a.rating!=null?a.rating.toFixed(2):''},
+    {label:'Total Ratings',get:a=>a.ratingCount??''},
+    {label:'Price',get:a=>a.price??''},
+    {label:'Category',get:a=>a.category??''},
+    {label:'Developer',get:a=>a.dev??''},
+    {label:'Version',get:a=>a.version??''},
+    {label:'Size',get:a=>a.size??''},
+    {label:'Age Rating',get:a=>a.ageRating??''},
+    {label:'Languages',get:a=>a.langs??''},
+    {label:'Last Updated',get:a=>a.updated?a.updated.toLocaleDateString():''},
+    {label:'Store URL',get:a=>a.url??''},
+  ];
+  for(const m of metrics) rows.push([m.label,...lastApps.map(m.get)]);
+  if(lastKwResults?.length){
+    rows.push([],[`Keyword Rankings`]);
+    rows.push(['Keyword',...lastApps.map(a=>a.name)]);
+    for(const {keyword,ranks} of lastKwResults)
+      rows.push([keyword,...ranks.map(r=>r.error?'error':r.pos?`#${r.pos}`:'—')]);
+  }
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`aso-analysis-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── ASO Health Score ──
+function renderHealthScore(apps, kwResults=[]) {
+  const sec=document.getElementById('health-section'), container=document.getElementById('health-cards');
+  container.innerHTML='';
+  const keywords=kwResults.length>0 ? kwResults.map(r=>r.keyword) : extractKeywords(apps,10);
+
+  apps.forEach((app,i)=>{
+    let score=0, breakdown=[];
+
+    // Rating Quality (0–25)
+    let rs=0, rl='No data';
+    if(app.rating!=null){rs=app.rating>=4.5?25:app.rating>=4.0?18:app.rating>=3.5?10:3;rl=`${app.rating.toFixed(1)}/5.0`;}
+    score+=rs; breakdown.push({label:'Rating Quality',val:rs,max:25,det:rl});
+
+    // Social Proof (0–20)
+    let ss=0, sl='No data';
+    if(app.ratingCount!=null){ss=app.ratingCount>=100000?20:app.ratingCount>=10000?15:app.ratingCount>=1000?10:app.ratingCount>=100?5:2;sl=`${fmtNum(app.ratingCount)} ratings`;}
+    score+=ss; breakdown.push({label:'Social Proof',val:ss,max:20,det:sl});
+
+    // Keyword Coverage (0–20)
+    let ks=0, kl='No keywords';
+    if(keywords.length>0){
+      const txt=[(app.name||''),(app.description||'')].join(' ').toLowerCase();
+      const covered=keywords.filter(kw=>txt.includes(kw.toLowerCase())).length;
+      ks=Math.round((covered/keywords.length)*20); kl=`${covered}/${keywords.length} covered`;
+    } else {ks=10; kl='Neutral';}
+    score+=ks; breakdown.push({label:'Keyword Coverage',val:ks,max:20,det:kl});
+
+    // Update Freshness (0–20)
+    let fs=0, fl='Unknown';
+    if(app.updated){const d=Math.floor((Date.now()-app.updated)/86400000);fs=d<=30?20:d<=90?15:d<=180?10:d<=365?5:0;fl=fmtDate(app.updated);}
+    else{fs=8;fl='Unknown (Android)';}
+    score+=fs; breakdown.push({label:'Update Freshness',val:fs,max:20,det:fl});
+
+    // Localization (0–15)
+    let ls=0, ll='Unknown';
+    if(app.langs!=null){ls=app.langs>=20?15:app.langs>=10?10:app.langs>=5?5:3;ll=`${app.langs} languages`;}
+    else{ls=5;ll='Unknown (Android)';}
+    score+=ls; breakdown.push({label:'Localization',val:ls,max:15,det:ll});
+
+    const pct=Math.min(100,score);
+    const gc=pct>=85?'var(--success)':pct>=70?'#22c55e':pct>=55?'#f59e0b':pct>=40?'#f97316':'var(--danger)';
+    const grade=pct>=85?'A':pct>=70?'B':pct>=55?'C':pct>=40?'D':'F';
+
+    const card=document.createElement('div'); card.className='health-card'+(i===0?' yours':'');
+    card.innerHTML=`
+      <div class="health-header">
+        <div class="health-name">${esc(app.name.length>22?app.name.slice(0,20)+'…':app.name)}</div>
+        <div class="health-grade" style="color:${gc}">${grade}</div>
+      </div>
+      <div class="health-score-row">
+        <div class="health-score-num" style="color:${gc}">${pct}</div>
+        <div class="health-bar-wrap"><div class="health-bar" style="width:${pct}%;background:${gc}"></div></div>
+      </div>
+      ${breakdown.map(b=>`
+        <div class="health-row">
+          <div class="health-row-label">${b.label}</div>
+          <div class="health-row-right">
+            <div class="health-mini-wrap"><div class="health-mini" style="width:${Math.round(b.val/b.max*100)}%;background:${gc}"></div></div>
+            <span class="health-row-pts">${b.val}/${b.max}</span>
+            <span class="health-row-det">${b.det}</span>
+          </div>
+        </div>`).join('')}`;
+    container.appendChild(card);
+  });
+  sec.style.display='block';
+}
+
+// ── Keyword Gaps ──
+function renderKeywordGaps(apps, kwResults) {
+  const sec=document.getElementById('gap-section');
+  if(!kwResults.length){sec.style.display='none';return;}
+  const gaps=[];
+  for(const {keyword,ranks} of kwResults){
+    const yourRank=ranks[0];
+    if(yourRank.pos!=null&&yourRank.pos<=10) continue;
+    const winners=apps.slice(1).map((app,idx)=>({app,rank:ranks[idx+1]}))
+      .filter(({rank})=>rank.pos!=null&&rank.pos<=10&&!rank.error);
+    if(winners.length>0) gaps.push({keyword,yourPos:yourRank.pos,winners});
+  }
+  const container=document.getElementById('gap-list'); container.innerHTML='';
+  if(gaps.length===0){
+    container.innerHTML='<p style="color:var(--success);font-size:14px;padding:8px 0">✓ Your app appears in top 10 for all tracked keywords — no gaps found.</p>';
+  } else {
+    gaps.forEach(({keyword,yourPos,winners})=>{
+      const row=document.createElement('div'); row.className='gap-row';
+      const comps=winners.map(({app,rank})=>`<span class="gap-comp-name">${esc(app.name.length>16?app.name.slice(0,14)+'…':app.name)}</span><span class="gap-comp">#${rank.pos}</span>`).join('');
+      row.innerHTML=`<div class="gap-kw">"${esc(keyword)}"</div><div class="gap-badges"><span class="gap-yours">${yourPos?`You: #${yourPos}`:'You: not ranked'}</span>${comps}</div>`;
+      container.appendChild(row);
+    });
+  }
+  sec.style.display='block';
+}
+
+// ── LM Studio ──
+async function connectLLM() {
+  const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
+  const statusEl=document.getElementById('llm-status'), modelRow=document.getElementById('llm-model-row');
+  const btn=document.getElementById('llm-connect-btn');
+  btn.disabled=true; statusEl.className='llm-status'; statusEl.textContent='';
+  try {
+    const res=await withTimeout(fetch(`${url}/models`),6000);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const models=data.data||[];
+    if(!models.length) throw new Error('No models loaded in LM Studio');
+    document.getElementById('llm-model-sel').innerHTML=models.map(m=>`<option value="${esc(m.id)}">${esc(m.id)}</option>`).join('');
+    modelRow.style.display='flex';
+    statusEl.className='llm-status ok'; statusEl.textContent=`✓ Connected — ${models.length} model${models.length!==1?'s':''} available`;
+  } catch(e) {
+    statusEl.className='llm-status err'; statusEl.textContent=`✗ ${e.message} — Is LM Studio running with the local server enabled?`;
+    modelRow.style.display='none';
+  } finally { btn.disabled=false; }
+}
+
+async function analyzeWithLLM() {
+  if(!lastApps){alert('Run an analysis first.');return;}
+  const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('llm-model-sel').value;
+  const mode=document.getElementById('llm-mode-sel').value;
+  const outputWrap=document.getElementById('llm-output-wrap'), outputEl=document.getElementById('llm-output');
+  const btn=document.getElementById('llm-analyze-btn');
+  outputWrap.style.display='block'; outputEl.textContent='Generating…'; btn.disabled=true;
+  try {
+    const res=await fetch(`${url}/chat/completions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'user',content:buildLLMPrompt(mode)}],temperature:0.7,stream:true})});
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const reader=res.body.getReader(), dec=new TextDecoder(); let text=''; outputEl.textContent='';
+    while(true){
+      const {value,done}=await reader.read(); if(done) break;
+      const chunk=dec.decode(value,{stream:true});
+      for(const line of chunk.split('\n')){
+        if(!line.startsWith('data: ')) continue;
+        const d=line.slice(6).trim(); if(d==='[DONE]') continue;
+        try{const p=JSON.parse(d);const delta=p.choices?.[0]?.delta?.content||'';text+=delta;outputEl.textContent=text;}catch(_){}
+      }
+    }
+  } catch(e) {
+    outputEl.textContent=`Error: ${e.message}\n\nMake sure LM Studio is running and the local server is enabled (Server tab in LM Studio).`;
+  } finally { btn.disabled=false; }
+}
+
+function buildLLMPrompt(mode='competitive') {
+  let appData='';
+  lastApps.forEach((a,i)=>{
+    appData+=`### ${i===0?'[YOUR APP] ':''}${a.name}\n`;
+    appData+=`- Store: ${a.store==='ios'?'App Store':'Google Play'}\n`;
+    if(a.dev) appData+=`- Developer: ${a.dev}\n`;
+    if(a.rating!=null) appData+=`- Rating: ${a.rating.toFixed(2)}/5 (${a.ratingCount?.toLocaleString()||'?'} ratings)\n`;
+    if(a.price) appData+=`- Price: ${a.price}\n`;
+    if(a.category) appData+=`- Category: ${a.category}\n`;
+    if(a.version) appData+=`- Version: ${a.version}\n`;
+    if(a.langs!=null) appData+=`- Languages supported: ${a.langs}\n`;
+    if(a.description) appData+=`- Description: ${a.description.slice(0,500)}${a.description.length>500?'…':''}\n`;
+    appData+='\n';
+  });
+  let kwData='';
+  if(lastKwResults?.length){
+    kwData='## Keyword Rankings\n\n';
+    for(const {keyword,ranks} of lastKwResults){
+      const parts=lastApps.map((a,i)=>{const r=ranks[i];return`${a.name}: ${r.pos?`#${r.pos}`:'not ranked'}`;});
+      kwData+=`- "${keyword}": ${parts.join(' | ')}\n`;
+    }
+    kwData+='\n';
+  }
+  const prompts={
+    competitive:`You are an ASO (App Store Optimization) expert. Analyze the following competitive intelligence.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Competitive Position** — how does [YOUR APP] compare overall?\n2. **Key Strengths** — concrete advantages your app has\n3. **Critical Gaps** — where competitors are winning and why\n4. **Quick Wins** — 3 specific changes to make immediately\n5. **Strategic Opportunities** — longer-term ASO plays based on this data\n\nBe specific — reference actual ratings, review counts, and keyword positions from the data above.`,
+
+    keywords:`You are an ASO keyword strategy expert. Analyze keyword performance and identify opportunities.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Current Performance** — how is [YOUR APP] doing on tracked keywords?\n2. **Gap Opportunities** — keywords where competitors rank top 10 but your app doesn't\n3. **Long-tail Targets** — 10–15 specific long-tail phrases likely to convert with lower competition\n4. **Priority Keywords** — ranked list of keywords to add to metadata immediately (with rationale)\n5. **Keywords to Drop** — any tracked keywords that are too competitive or irrelevant\n\nFormat keyword suggestions as a clear list, one per line.`,
+
+    description:`You are an ASO copywriter. Rewrite the description for [YOUR APP] to maximize store conversion and keyword coverage.\n\n## Apps\n\n${appData}${kwData}Instructions:\n- Write a full App Store / Google Play description (aim for 3000–4000 characters)\n- The first 3 lines MUST hook the reader before the "More" fold — lead with the strongest value proposition\n- Naturally weave in keywords from the keyword data above without stuffing\n- Use short paragraphs (2–3 sentences max) and bullet points for scannability\n- Match the tone of the ${lastApps[0]?.category||'app'} category\n- End with a clear call-to-action\n\nOutput only the rewritten description, ready to paste into the store.`,
+
+    metadata:`You are an ASO metadata specialist. Optimize the metadata fields for [YOUR APP].\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Title** — rewritten title (iOS: ≤30 chars, Android: ≤50 chars). Show character count.\n2. **Subtitle / Short Description** — iOS subtitle (≤30 chars) or Android short description (≤80 chars). Show character count.\n3. **iOS Keyword Field** — 100-character comma-separated keyword string (no spaces after commas, no repeats from title)\n4. **Description Opening** — rewrite just the first 3 lines that appear before the fold\n5. **Category** — confirm or suggest a better primary category and secondary category if applicable\n\nAlways show character counts next to each suggestion.`,
+
+    positioning:`You are a product positioning and ASO strategist. Help [YOUR APP] stand out in a crowded market.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Unique Selling Proposition** — the single sentence that captures what makes [YOUR APP] different\n2. **Competitor Weaknesses to Exploit** — specific rating pain points or gaps you can own\n3. **Underserved Audience Segments** — based on category and reviews data, who is underserved?\n4. **Blue Ocean Keywords** — keyword niches competitors aren't targeting\n5. **Visual / Creative Direction** — screenshot themes, icon direction, preview video concept\n6. **3 Tagline Options** — punchy, under 10 words each, for use in screenshots and metadata`
+  };
+  return prompts[mode]||prompts.competitive;
+}
+</script>
+</body>
+</html>

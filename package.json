@@ -1,0 +1,12 @@
+{
+  "name": "aso-analyzer",
+  "version": "1.0.0",
+  "description": "ASO competitor analysis — no API key required",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
