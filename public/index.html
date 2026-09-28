@@ -151,6 +151,21 @@ table.cmp{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-nume
 .kw-rank.low{background:var(--surface-2);color:var(--text-2)}
 @media(prefers-color-scheme:dark){.kw-rank.top3{background:#3b1a00;color:#fbbf24}}
 
+/* Keyword selector chips */
+.kw-selector{margin-bottom:6px}
+.kw-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:30px}
+.kw-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 8px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:13px;color:var(--text-2);transition:all .15s;user-select:none;white-space:nowrap}
+.kw-chip.on{border-color:var(--accent);background:var(--accent-mid);color:var(--accent)}
+.kw-chip .chip-ck{font-size:11px;min-width:10px}
+.kw-chip .chip-rm{margin-left:2px;font-size:13px;line-height:1;color:var(--muted);opacity:0;transition:opacity .12s}
+.kw-chip:hover .chip-rm{opacity:1}
+.kw-add-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.kw-add-input{font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;width:160px}
+.kw-add-input:focus{border-color:var(--accent)}
+.kw-run-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13.5px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.kw-run-btn:disabled{opacity:.45;cursor:default}
+.kw-run-btn:hover:not(:disabled){opacity:.85}
+
 /* Keyword table */
 .kw-tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:14px}
 table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
@@ -218,6 +233,30 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .llm-output-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;min-height:80px;display:none}
 .llm-output{font-size:14px;line-height:1.75;color:var(--text);white-space:pre-wrap;word-break:break-word}
 
+/* App picker */
+.app-picker{position:relative;flex:1;min-width:0}
+.picker-input{width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--text);outline:none;padding:0}
+.picker-input::placeholder{color:var(--muted)}
+.picker-sel{display:flex;align-items:center;gap:8px;width:100%;cursor:text}
+.picker-sel-icon{width:26px;height:26px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--surface-2)}
+.picker-sel-name{flex:1;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.picker-dropdown{position:absolute;top:calc(100% + 8px);left:-13px;right:-13px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);z-index:300;max-height:360px;overflow-y:auto;display:none}
+.picker-dropdown.open{display:block}
+.picker-item{display:flex;align-items:center;gap:10px;padding:9px 13px;cursor:pointer;border-bottom:1px solid var(--border-soft);transition:background .1s}
+.picker-item:last-child{border-bottom:none}
+.picker-item:hover{background:var(--accent-mid)}
+.p-icon{width:38px;height:38px;border-radius:9px;flex-shrink:0;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden}
+.p-icon img{width:38px;height:38px;object-fit:cover;display:block}
+.p-info{flex:1;min-width:0}
+.p-name{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.p-dev{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-meta{display:flex;gap:6px;align-items:center;margin-top:3px}
+.p-stars{font-size:11px;color:#f59e0b}
+.picker-msg{padding:14px 13px;font-size:13px;color:var(--muted);text-align:center}
+.picker-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;font-size:13px;color:var(--muted)}
+.mini-spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+.picker-sep{padding:4px 13px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);background:var(--surface-2)}
+
 @media(max-width:560px){
   .bar{flex-direction:column;align-items:stretch}
   .go-btn{justify-content:center}
@@ -241,10 +280,18 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
     <div class="blk">
       <p class="blk-title">Your App</p>
       <p class="blk-desc">Paste your App Store or Google Play URL</p>
-      <div class="url-row yours">
+      <div class="url-row yours" id="your-row">
         <span class="row-lbl">Your App</span>
-        <input class="url-field" id="your-url" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false">
+        <div class="app-picker">
+          <input class="picker-input" type="text" placeholder="Search your app by name…" autocomplete="off" spellcheck="false">
+          <div class="picker-sel" style="display:none">
+            <img class="picker-sel-icon" src="" alt="">
+            <span class="picker-sel-name"></span>
+          </div>
+          <div class="picker-dropdown"></div>
+        </div>
         <span class="plat" id="your-plat"></span>
+        <button class="rm-btn picker-clear" title="Clear" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>
     </div>
 
@@ -259,16 +306,7 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
     </div>
 
     <div class="bar">
-      <div class="bar-left">
-        <label class="toggle-label">
-          <span class="toggle-track">
-            <input type="checkbox" id="kw-toggle" checked>
-            <span class="toggle-thumb"></span>
-          </span>
-          Keyword Rankings
-        </label>
-        <button class="ex-btn" id="ex-btn">Try example: Language apps</button>
-      </div>
+      <div class="bar-left"></div>
       <button class="go-btn" id="go-btn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analyze Apps
@@ -319,6 +357,16 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
       <div class="health-grid" id="health-cards"></div>
     </div>
 
+    <div class="r-section kw-selector" id="kw-selector-section" style="display:none">
+      <p class="r-h" style="margin-bottom:10px">Keywords to Analyze</p>
+      <div class="kw-chips" id="kw-chips"></div>
+      <div class="kw-add-row">
+        <input id="kw-add-input" class="kw-add-input" type="text" placeholder="Add keyword…" spellcheck="false">
+        <button class="ex-btn" onclick="addCustomKeyword()">Add</button>
+        <button class="kw-run-btn" id="kw-run-btn" onclick="analyzeKeywords()">Analyze Keywords ▶</button>
+      </div>
+    </div>
+
     <div class="r-section" id="kw-results-section" style="display:none">
       <p class="r-h">Keyword Rankings</p>
       <div id="kw-cards"></div>
@@ -328,6 +376,12 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
       <p class="r-h">Keyword Gaps</p>
       <p style="font-size:13px;color:var(--muted);margin:0 0 14px">Keywords where competitors appear in top 10 but your app doesn't — direct ranking opportunities.</p>
       <div id="gap-list"></div>
+    </div>
+
+    <div class="r-section" id="density-section" style="display:none">
+      <p class="r-h">Keyword Density</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 14px">How many times each tracked keyword appears in each app's title (T) and description (D) — higher density signals better keyword integration.</p>
+      <div id="density-table"></div>
     </div>
 
     <div class="llm-section">
@@ -362,6 +416,7 @@ const COUNTRY = 'us';
 
 let compCount = 0, chartR = null, chartN = null;
 let lastApps = null, lastKwResults = null;
+const appCache = {}; // url → fetched app data
 
 // ── Helpers ──
 function withTimeout(p, ms) {
@@ -532,12 +587,31 @@ async function fetchKeywordRanking(keyword, apps) {
         if (!r.ok) { apps.forEach((a,i)=>{if(a.store==='android')ranks[i].error=true;}); return; }
         const html = await r.text();
         const seen=new Set(), all=[];
-        // Try aria-label for names
+
+        // Extract square app icon URLs (=sNNN format) from the JS data payload.
+        // Wide-format URLs (=wNNN-hNNN) are screenshots, not icons — skip them.
+        const iconPos=[];
+        const iconRe=/"(https:\/\/play-lh\.googleusercontent\.com\/[^"]+?=s\d+[^"]*)"/g;
+        let im;
+        while((im=iconRe.exec(html))!==null) iconPos.push({url:im[1],idx:im.index});
+
+        function nearestIcon(appIdx){
+          let best=null, bestDist=Infinity;
+          for(const ip of iconPos){const d=Math.abs(ip.idx-appIdx);if(d<bestDist&&d<2000){bestDist=d;best=ip.url;}}
+          return best;
+        }
+
+        // Primary: aria-label anchors give both ID and name
         const ariaRe=/href="\/store\/apps\/details\?id=([a-zA-Z0-9._]+)"[^>]*aria-label="([^"]+)"/g;
         let m;
-        while((m=ariaRe.exec(html))!==null) { if(!seen.has(m[1])){ seen.add(m[1]); all.push({packageId:m[1],name:m[2].replace(/\s*[-–].*/,'').trim()}); } }
-        // Fallback: just IDs
-        if(all.length<5){ const idRe=/\/store\/apps\/details\?id=([a-zA-Z0-9._]+)/g; while((m=idRe.exec(html))!==null){ if(!seen.has(m[1])){ seen.add(m[1]); all.push({packageId:m[1],name:null}); } } }
+        while((m=ariaRe.exec(html))!==null){
+          if(!seen.has(m[1])){seen.add(m[1]);all.push({packageId:m[1],name:m[2].replace(/\s*[-–].*/,'').trim(),icon:nearestIcon(m.index)});}
+        }
+        // Fallback: bare ID links (no name)
+        if(all.length<5){
+          const idRe=/\/store\/apps\/details\?id=([a-zA-Z0-9._]+)/g;
+          while((m=idRe.exec(html))!==null){if(!seen.has(m[1])){seen.add(m[1]);all.push({packageId:m[1],name:null,icon:nearestIcon(m.index)});}}
+        }
         androidTop = all.slice(0,10).map((a,i)=>({...a,pos:i+1}));
         const pkgs = all.map(a=>a.packageId);
         apps.forEach((a,i)=>{ if(a.store==='android'&&a.packageId){const p=pkgs.indexOf(a.packageId);ranks[i].pos=p>=0?p+1:null;} });
@@ -549,14 +623,14 @@ async function fetchKeywordRanking(keyword, apps) {
 }
 
 // ── Render ──
-function renderAll(apps, kwResults=[]) {
-  lastApps=apps; lastKwResults=kwResults;
+function renderAll(apps) {
+  lastApps=apps;
   renderCards(apps);
   renderCharts(apps);
   renderTable(apps);
-  renderHealthScore(apps, kwResults);
-  kwResults.length>0 ? renderKeywordCards(apps,kwResults) : (document.getElementById('kw-results-section').style.display='none');
-  renderKeywordGaps(apps, kwResults);
+  if(typeof renderHealthScore==='function') renderHealthScore(apps,[]);
+  document.getElementById('kw-results-section').style.display='none';
+  if(typeof renderKeywordGaps==='function') renderKeywordGaps(apps,[]);
   document.getElementById('android-note').style.display=apps.some(a=>a.store==='android')?'block':'none';
   document.getElementById('results').style.display='block';
   document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
@@ -598,6 +672,8 @@ function renderTable(apps) {
     {label:'📦 Size',get:a=>a.size,fmt:v=>v,cmp:null},
     {label:'🔞 Age Rating',get:a=>a.ageRating,fmt:v=>v,cmp:null},
     {label:'🌍 Languages',get:a=>a.langs,fmt:v=>v!=null?`${v}`:null,cmp:'higher'},
+    {label:'🔤 Title Length',get:a=>a.name?.length??null,fmt:(_,a)=>a.name?`${a.name.length}/${a.store==='ios'?30:50} chars`:null,cmp:null},
+    {label:'📝 Description',get:a=>a.description?.length??null,fmt:(_,a)=>a.description?`${a.description.length}/4000 chars`:null,cmp:null},
   ];
   const wins=new Array(apps.length).fill(0); tbody.innerHTML='';
   for (const m of metrics) {
@@ -617,6 +693,52 @@ function renderTable(apps) {
   const maxW=Math.max(...wins), wr=document.createElement('tr'); wr.className='win-row';
   wr.innerHTML='<td>🏆 Score</td>'+apps.map((_,i)=>`<td>${wins[i]===maxW&&maxW>0?'<span class="win-chip">Winner</span>':''}<span style="color:var(--muted);font-size:12px">${wins[i]} win${wins[i]!==1?'s':''}</span></td>`).join('');
   tbody.appendChild(wr);
+}
+
+// ── Keyword chip selector ──
+function renderKeywordSelector(keywords) {
+  const sec=document.getElementById('kw-selector-section');
+  const chips=document.getElementById('kw-chips');
+  chips.innerHTML='';
+  for(const kw of keywords) chips.appendChild(makeChip(kw,true));
+  sec.style.display='block';
+}
+function makeChip(kw, on) {
+  const chip=document.createElement('span');
+  chip.className='kw-chip'+(on?' on':'');
+  chip.dataset.kw=kw;
+  chip.innerHTML=`<span class="chip-ck">${on?'✓':'+'}</span>${esc(kw)}<span class="chip-rm" title="Remove">×</span>`;
+  chip.addEventListener('click',e=>{
+    if(e.target.classList.contains('chip-rm')){chip.remove();return;}
+    chip.classList.toggle('on');
+    chip.querySelector('.chip-ck').textContent=chip.classList.contains('on')?'✓':'+';
+  });
+  return chip;
+}
+function addCustomKeyword() {
+  const input=document.getElementById('kw-add-input');
+  const val=input.value.trim().toLowerCase(); if(!val)return;
+  const existing=[...document.querySelectorAll('#kw-chips .kw-chip')].map(c=>c.dataset.kw);
+  if(existing.includes(val)){input.value='';return;}
+  document.getElementById('kw-chips').appendChild(makeChip(val,true));
+  input.value='';
+}
+document.getElementById('kw-add-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')addCustomKeyword();});
+async function analyzeKeywords() {
+  if(!lastApps){alert('Run an analysis first.');return;}
+  const selected=[...document.querySelectorAll('#kw-chips .kw-chip.on')].map(c=>c.dataset.kw);
+  if(!selected.length){alert('Select at least one keyword.');return;}
+  const btn=document.getElementById('kw-run-btn'); btn.disabled=true; btn.textContent='Analyzing…';
+  const kwSec=document.getElementById('kw-results-section');
+  document.getElementById('kw-cards').innerHTML=`<p style="color:var(--muted);font-size:13px;padding:10px 0">Checking ${selected.length} keyword${selected.length>1?'s':''}…</p>`;
+  kwSec.style.display='block';
+  const kwResults=await Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps)));
+  lastKwResults=kwResults;
+  renderKeywordCards(lastApps,kwResults);
+  renderKeywordGaps(lastApps,kwResults);
+  renderKeywordDensity(lastApps,kwResults);
+  btn.disabled=false; btn.textContent='Analyze Keywords ▶';
+  kwSec.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function renderKeywordCards(apps, kwResults) {
@@ -643,9 +765,10 @@ function renderKeywordCards(apps, kwResults) {
     const link=isIos?`https://apps.apple.com/app/id${a.trackId}`:`https://play.google.com/store/apps/details?id=${a.packageId}`;
     const pos=a.pos;
     const title=`${pos ? '#'+pos+' ' : ''}${name}`;
-    const iconEl=isIos&&a.icon
-      ?`<img class="kw-ico-img" src="${esc(a.icon)}" alt="${esc(name)}" loading="lazy">`
-      :`<div class="kw-ico-ph">${isIos?'🍎':'🤖'}</div>`;
+    const ph=isIos?'🍎':'🤖';
+    const iconEl=a.icon
+      ?`<img class="kw-ico-img" src="${esc(a.icon)}" alt="${esc(name)}" loading="lazy" onerror="this.style.display='none'">`
+      :`<div class="kw-ico-ph">${ph}</div>`;
     return `<a class="kw-ico-link${isMine?' mine':''}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(title)}">${iconEl}</a>`;
   }).join('');
 
@@ -668,57 +791,195 @@ function renderKeywordCards(apps, kwResults) {
   sec.style.display='block';
 }
 
+// ── App picker ──
+function initPicker(rowEl) {
+  const input = rowEl.querySelector('.picker-input');
+  const dropdown = rowEl.querySelector('.picker-dropdown');
+  const clearBtn = rowEl.querySelector('.picker-clear');
+  let timer = null;
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearTimeout(timer);
+    if (q.length < 2) { dropdown.classList.remove('open'); return; }
+    dropdown.innerHTML = '<div class="picker-loading"><div class="mini-spin"></div>Searching…</div>';
+    dropdown.classList.add('open');
+    timer = setTimeout(() => doPickerSearch(q, rowEl, dropdown), 380);
+  });
+  input.addEventListener('focus', () => {
+    if (dropdown.children.length && input.value.trim().length >= 2) dropdown.classList.add('open');
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); }
+  });
+  clearBtn?.addEventListener('click', () => clearPicker(rowEl));
+  document.addEventListener('click', e => { if (!rowEl.contains(e.target)) dropdown.classList.remove('open'); }, true);
+}
+
+async function doPickerSearch(query, rowEl, dropdown) {
+  if (!dropdown.classList.contains('open')) return;
+  let iosItems = [], androidItems = [];
+
+  const [iosRes, andRes] = await Promise.allSettled([
+    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=software&limit=8&country=us`)
+      .then(r => r.json())
+      .then(d => (d.results||[]).map(a => ({
+        store:'ios', name:a.trackName, dev:a.sellerName,
+        icon:a.artworkUrl100||a.artworkUrl60,
+        rating:a.averageUserRating??null,
+        url:`https://apps.apple.com/us/app/id${a.trackId}`
+      }))),
+    withTimeout(
+      fetch(`/proxy?url=${encodeURIComponent(`https://play.google.com/store/search?q=${encodeURIComponent(query)}&c=apps&hl=en&gl=us`)}`)
+        .then(r => r.ok ? r.text() : '').then(parsePlaySearchResults),
+      10000
+    )
+  ]);
+
+  if (!dropdown.classList.contains('open')) return;
+  if (iosRes.status === 'fulfilled') iosItems = iosRes.value;
+  if (andRes.status === 'fulfilled') androidItems = andRes.value;
+
+  renderPickerDropdown([...iosItems, ...androidItems], rowEl, dropdown);
+}
+
+function parsePlaySearchResults(html) {
+  if (!html) return [];
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const seen = new Set(), results = [];
+  doc.querySelectorAll('a[href*="/store/apps/details?id="]').forEach(link => {
+    if (results.length >= 8) return;
+    const m = link.href.match(/[?&]id=([a-zA-Z0-9._]+)/);
+    if (!m || seen.has(m[1])) return;
+    seen.add(m[1]);
+    const name = (link.getAttribute('aria-label')||'').replace(/\s*[-–].*/,'').trim();
+    if (!name) return;
+    let icon = null, el = link;
+    for (let i = 0; i < 5 && el; i++) {
+      const img = el.querySelector('img[src*="googleusercontent"],img[src*="play-lh"]');
+      if (img?.src) { icon = img.src.replace(/=s\d+/, '=s100'); break; }
+      el = el.parentElement;
+    }
+    results.push({ store:'android', name, dev:null, icon, rating:null, url:`https://play.google.com/store/apps/details?id=${m[1]}` });
+  });
+  return results;
+}
+
+function renderPickerDropdown(items, rowEl, dropdown) {
+  dropdown.innerHTML = '';
+  if (!items.length) { dropdown.innerHTML = '<div class="picker-msg">No results found</div>'; return; }
+  const ios = items.filter(i => i.store==='ios'), and = items.filter(i => i.store==='android');
+  const addSection = (label, list) => {
+    if (!list.length) return;
+    const sep = document.createElement('div'); sep.className = 'picker-sep'; sep.textContent = label;
+    dropdown.appendChild(sep);
+    list.forEach(item => {
+      const div = document.createElement('div'); div.className = 'picker-item';
+      const iconBox = document.createElement('div'); iconBox.className = 'p-icon';
+      if (item.icon) {
+        const img = new Image(); img.src = item.icon;
+        img.onerror = () => { iconBox.textContent = item.store==='ios'?'🍎':'🤖'; };
+        iconBox.appendChild(img);
+      } else { iconBox.textContent = item.store==='ios'?'🍎':'🤖'; }
+      const info = document.createElement('div'); info.className = 'p-info';
+      info.innerHTML = `<div class="p-name">${esc(item.name)}</div>${item.dev?`<div class="p-dev">${esc(item.dev)}</div>`:''}<div class="p-meta"><span class="bdg ${item.store}" style="font-size:10px;padding:1px 6px">${item.store==='ios'?'🍎 iOS':'🤖 Android'}</span>${item.rating!=null?`<span class="p-stars">★ ${item.rating.toFixed(1)}</span>`:''}</div>`;
+      div.append(iconBox, info);
+      div.addEventListener('click', () => { selectApp(rowEl, item); dropdown.classList.remove('open'); });
+      dropdown.appendChild(div);
+    });
+  };
+  addSection('🍎 App Store', ios);
+  addSection('🤖 Google Play', and);
+}
+
+function selectApp(rowEl, item) {
+  rowEl.dataset.appUrl = item.url;
+  const input = rowEl.querySelector('.picker-input');
+  const sel = rowEl.querySelector('.picker-sel');
+  const selIcon = rowEl.querySelector('.picker-sel-icon');
+  const selName = rowEl.querySelector('.picker-sel-name');
+  const plat = rowEl.querySelector('.plat');
+  const clearBtn = rowEl.querySelector('.picker-clear');
+  input.style.display = 'none'; sel.style.display = 'flex';
+  if (item.icon) { selIcon.src = item.icon; selIcon.style.display = ''; } else { selIcon.style.display = 'none'; }
+  selName.textContent = item.name;
+  if (plat) { plat.textContent = item.store==='ios'?'🍎 iOS':'🤖 Android'; plat.className=`plat ${item.store}`; }
+  if (clearBtn) clearBtn.style.display = 'flex';
+}
+
+function clearPicker(rowEl) {
+  rowEl.dataset.appUrl = '';
+  const input = rowEl.querySelector('.picker-input');
+  const sel = rowEl.querySelector('.picker-sel');
+  const plat = rowEl.querySelector('.plat');
+  const clearBtn = rowEl.querySelector('.picker-clear');
+  const dropdown = rowEl.querySelector('.picker-dropdown');
+  input.style.display = ''; input.value = ''; input.focus();
+  sel.style.display = 'none';
+  dropdown.classList.remove('open');
+  if (plat) { plat.textContent = ''; plat.className = 'plat'; }
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+
 // ── Competitor rows ──
 function makeCompRow(n) {
-  const div=document.createElement('div'); div.className='url-row';
-  const badge=document.createElement('span'); badge.className='plat';
-  div.innerHTML=`<span class="row-lbl">Comp. ${n}</span><input class="url-field comp-field" type="url" placeholder="https://apps.apple.com/…  or  https://play.google.com/…" autocomplete="off" spellcheck="false"><button class="rm-btn" title="Remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
-  div.insertBefore(badge, div.querySelector('.rm-btn'));
-  div.querySelector('.comp-field').addEventListener('input',function(){setPlatBadge(badge,this.value);});
-  div.querySelector('.rm-btn').addEventListener('click',()=>{ div.remove(); reNumberComps(); compCount--; updateAddBtn(); });
+  const div = document.createElement('div');
+  div.className = 'url-row comp-row';
+  div.innerHTML = `<span class="row-lbl">Comp. ${n}</span><div class="app-picker"><input class="picker-input" type="text" placeholder="Search competitor app…" autocomplete="off" spellcheck="false"><div class="picker-sel" style="display:none"><img class="picker-sel-icon" src="" alt=""><span class="picker-sel-name"></span></div><div class="picker-dropdown"></div></div><span class="plat"></span><button class="rm-btn picker-clear" title="Clear selection" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button><button class="rm-btn remove-row" title="Remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>`;
+  div.querySelector('.remove-row').addEventListener('click', () => { div.remove(); reNumberComps(); compCount--; updateAddBtn(); });
+  initPicker(div);
   return div;
 }
 function reNumberComps() {
-  document.querySelectorAll('#comp-list .url-row').forEach((r,i)=>r.querySelector('.row-lbl').textContent=`Comp. ${i+1}`);
-  compCount=document.querySelectorAll('#comp-list .url-row').length;
+  document.querySelectorAll('#comp-list .comp-row').forEach((r,i) => r.querySelector('.row-lbl').textContent = `Comp. ${i+1}`);
+  compCount = document.querySelectorAll('#comp-list .comp-row').length;
 }
-function updateAddBtn() { document.getElementById('add-btn').disabled=compCount>=4; }
+function updateAddBtn() { document.getElementById('add-btn').disabled = compCount >= 4; }
 
-document.getElementById('add-btn').addEventListener('click',()=>{ if(compCount>=4)return; compCount++; document.getElementById('comp-list').appendChild(makeCompRow(compCount)); updateAddBtn(); });
-document.getElementById('your-url').addEventListener('input',function(){setPlatBadge(document.getElementById('your-plat'),this.value);});
-document.getElementById('ex-btn').addEventListener('click',()=>{
-  document.getElementById('your-url').value='https://apps.apple.com/us/app/duolingo/id570060128';
-  setPlatBadge(document.getElementById('your-plat'),document.getElementById('your-url').value);
-  document.getElementById('comp-list').innerHTML=''; compCount=0;
-  ['https://apps.apple.com/us/app/babbel/id829587759','https://play.google.com/store/apps/details?id=air.com.rosettastone.mobile.CoursePlayer'].forEach(url=>{
-    compCount++; const row=makeCompRow(compCount); row.querySelector('.comp-field').value=url; setPlatBadge(row.querySelector('.plat'),url); document.getElementById('comp-list').appendChild(row);
-  });
-  updateAddBtn();
+document.getElementById('add-btn').addEventListener('click', () => {
+  if (compCount >= 4) return; compCount++; document.getElementById('comp-list').appendChild(makeCompRow(compCount)); updateAddBtn();
 });
+
+// Init your-app picker
+initPicker(document.getElementById('your-row'));
 
 // ── Analyze ──
 document.getElementById('go-btn').addEventListener('click',analyze);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))analyze();});
 
 async function analyze() {
-  const yourRaw=document.getElementById('your-url').value.trim(), yourParsed=parseUrl(yourRaw);
-  if(!yourRaw||!yourParsed){alert('Please enter a valid App Store or Google Play URL for your app.');return;}
-  const toFetch=[{parsed:yourParsed}];
-  document.querySelectorAll('.comp-field').forEach(f=>{const p=parseUrl(f.value.trim());if(p)toFetch.push({parsed:p});});
+  const yourUrl=(document.getElementById('your-row').dataset.appUrl||'').trim();
+  const yourParsed=parseUrl(yourUrl);
+  if(!yourUrl||!yourParsed){alert('Please search and select your app first.');return;}
+
+  const entries=[{raw:yourUrl,parsed:yourParsed}];
+  document.querySelectorAll('#comp-list .comp-row').forEach(row=>{
+    const raw=(row.dataset.appUrl||'').trim(), p=parseUrl(raw); if(p) entries.push({raw,parsed:p});
+  });
+
   const goBtn=document.getElementById('go-btn'); goBtn.disabled=true;
   document.getElementById('results').style.display='none';
+  document.getElementById('kw-selector-section').style.display='none';
   document.getElementById('loader').style.display='block';
   const ldTxt=document.getElementById('ld-txt'), ldSteps=document.getElementById('ld-steps');
   ldSteps.innerHTML='';
-  const stepEls=toFetch.map((_,i)=>{const li=document.createElement('li');li.textContent=`App ${i+1}…`;ldSteps.appendChild(li);return li;});
-  let done=0; ldTxt.textContent=`Fetching ${toFetch.length} app${toFetch.length>1?'s':''}…`;
+  const stepEls=entries.map((_,i)=>{const li=document.createElement('li');li.textContent=`App ${i+1}…`;ldSteps.appendChild(li);return li;});
+  let done=0; ldTxt.textContent=`Fetching ${entries.length} app${entries.length>1?'s':''}…`;
 
-  const apps=await Promise.all(toFetch.map(async({parsed},i)=>{
+  const apps=await Promise.all(entries.map(async({raw,parsed},i)=>{
+    // Check cache first
+    const ckey=raw.toLowerCase();
+    if(appCache[ckey]){
+      done++; stepEls[i].className='done'; stepEls[i].textContent=`✓ ${appCache[ckey].name} (cached)`;
+      ldTxt.textContent=`Fetched ${done}/${entries.length}…`;
+      return appCache[ckey];
+    }
     stepEls[i].className='active'; stepEls[i].textContent=`App ${i+1}: fetching…`;
     try {
       const onStatus=msg=>{stepEls[i].textContent=`App ${i+1}: ${msg}`;};
       const data=parsed.store==='ios'?await fetchiOS(parsed.id):await fetchAndroid(parsed.id,onStatus);
-      done++; ldTxt.textContent=`Fetched ${done}/${toFetch.length}…`; stepEls[i].className='done'; stepEls[i].textContent=`✓ ${data.name}`;
+      appCache[ckey]=data;
+      done++; ldTxt.textContent=`Fetched ${done}/${entries.length}…`; stepEls[i].className='done'; stepEls[i].textContent=`✓ ${data.name}`;
       return data;
     } catch(e) {
       done++; stepEls[i].className='fail'; stepEls[i].textContent=`✗ App ${i+1}: ${e.message}`;
@@ -726,19 +987,12 @@ async function analyze() {
     }
   }));
 
-  let kwResults=[];
-  if(document.getElementById('kw-toggle').checked) {
-    const keywords=extractKeywords(apps);
-    if(keywords.length>0) {
-      ldTxt.textContent=`Checking ${keywords.length} keywords…`;
-      const kwStep=document.createElement('li'); kwStep.className='active'; kwStep.textContent='Fetching keyword rankings…'; ldSteps.appendChild(kwStep);
-      kwResults=await Promise.all(keywords.map(kw=>fetchKeywordRanking(kw,apps)));
-      kwStep.className='done'; kwStep.textContent=`✓ Keyword rankings fetched`;
-    }
-  }
-
   document.getElementById('loader').style.display='none'; goBtn.disabled=false;
-  renderAll(apps,kwResults);
+  renderAll(apps);
+
+  // Show keyword chip selector
+  const keywords=extractKeywords(apps);
+  renderKeywordSelector(keywords);
 }
 
 // ── Export CSV ──
@@ -783,17 +1037,18 @@ function renderHealthScore(apps, kwResults=[]) {
   const keywords=kwResults.length>0 ? kwResults.map(r=>r.keyword) : extractKeywords(apps,10);
 
   apps.forEach((app,i)=>{
-    let score=0, breakdown=[];
+    let score=0, maxScore=0, breakdown=[];
+    const isAndroid=app.store==='android';
 
     // Rating Quality (0–25)
     let rs=0, rl='No data';
     if(app.rating!=null){rs=app.rating>=4.5?25:app.rating>=4.0?18:app.rating>=3.5?10:3;rl=`${app.rating.toFixed(1)}/5.0`;}
-    score+=rs; breakdown.push({label:'Rating Quality',val:rs,max:25,det:rl});
+    score+=rs; maxScore+=25; breakdown.push({label:'Rating Quality',val:rs,max:25,det:rl});
 
     // Social Proof (0–20)
     let ss=0, sl='No data';
     if(app.ratingCount!=null){ss=app.ratingCount>=100000?20:app.ratingCount>=10000?15:app.ratingCount>=1000?10:app.ratingCount>=100?5:2;sl=`${fmtNum(app.ratingCount)} ratings`;}
-    score+=ss; breakdown.push({label:'Social Proof',val:ss,max:20,det:sl});
+    score+=ss; maxScore+=20; breakdown.push({label:'Social Proof',val:ss,max:20,det:sl});
 
     // Keyword Coverage (0–20)
     let ks=0, kl='No keywords';
@@ -802,21 +1057,30 @@ function renderHealthScore(apps, kwResults=[]) {
       const covered=keywords.filter(kw=>txt.includes(kw.toLowerCase())).length;
       ks=Math.round((covered/keywords.length)*20); kl=`${covered}/${keywords.length} covered`;
     } else {ks=10; kl='Neutral';}
-    score+=ks; breakdown.push({label:'Keyword Coverage',val:ks,max:20,det:kl});
+    score+=ks; maxScore+=20; breakdown.push({label:'Keyword Coverage',val:ks,max:20,det:kl});
 
-    // Update Freshness (0–20)
-    let fs=0, fl='Unknown';
-    if(app.updated){const d=Math.floor((Date.now()-app.updated)/86400000);fs=d<=30?20:d<=90?15:d<=180?10:d<=365?5:0;fl=fmtDate(app.updated);}
-    else{fs=8;fl='Unknown (Android)';}
-    score+=fs; breakdown.push({label:'Update Freshness',val:fs,max:20,det:fl});
+    // Update Freshness (0–20) — skip for Android (not exposed in Play Store page)
+    if(app.updated){
+      const d=Math.floor((Date.now()-app.updated)/86400000);
+      const fs=d<=30?20:d<=90?15:d<=180?10:d<=365?5:0;
+      score+=fs; maxScore+=20; breakdown.push({label:'Update Freshness',val:fs,max:20,det:fmtDate(app.updated)});
+    } else if(!isAndroid){
+      maxScore+=20; breakdown.push({label:'Update Freshness',val:0,max:20,det:'Unknown'});
+    } else {
+      breakdown.push({label:'Update Freshness',skip:true});
+    }
 
-    // Localization (0–15)
-    let ls=0, ll='Unknown';
-    if(app.langs!=null){ls=app.langs>=20?15:app.langs>=10?10:app.langs>=5?5:3;ll=`${app.langs} languages`;}
-    else{ls=5;ll='Unknown (Android)';}
-    score+=ls; breakdown.push({label:'Localization',val:ls,max:15,det:ll});
+    // Localization (0–15) — skip for Android (not exposed in Play Store page)
+    if(app.langs!=null){
+      const ls=app.langs>=20?15:app.langs>=10?10:app.langs>=5?5:3;
+      score+=ls; maxScore+=15; breakdown.push({label:'Localization',val:ls,max:15,det:`${app.langs} languages`});
+    } else if(!isAndroid){
+      maxScore+=15; breakdown.push({label:'Localization',val:0,max:15,det:'Unknown'});
+    } else {
+      breakdown.push({label:'Localization',skip:true});
+    }
 
-    const pct=Math.min(100,score);
+    const pct=maxScore>0?Math.min(100,Math.round(score/maxScore*100)):0;
     const gc=pct>=85?'var(--success)':pct>=70?'#22c55e':pct>=55?'#f59e0b':pct>=40?'#f97316':'var(--danger)';
     const grade=pct>=85?'A':pct>=70?'B':pct>=55?'C':pct>=40?'D':'F';
 
@@ -830,8 +1094,12 @@ function renderHealthScore(apps, kwResults=[]) {
         <div class="health-score-num" style="color:${gc}">${pct}</div>
         <div class="health-bar-wrap"><div class="health-bar" style="width:${pct}%;background:${gc}"></div></div>
       </div>
-      ${breakdown.map(b=>`
-        <div class="health-row">
+      ${breakdown.map(b=>b.skip?`
+        <div class="health-row" style="opacity:0.4">
+          <div class="health-row-label">${b.label}</div>
+          <div class="health-row-right"><span class="health-row-det">N/A — not in Play Store data</span></div>
+        </div>`:
+        `<div class="health-row">
           <div class="health-row-label">${b.label}</div>
           <div class="health-row-right">
             <div class="health-mini-wrap"><div class="health-mini" style="width:${Math.round(b.val/b.max*100)}%;background:${gc}"></div></div>
@@ -867,6 +1135,36 @@ function renderKeywordGaps(apps, kwResults) {
       container.appendChild(row);
     });
   }
+  sec.style.display='block';
+}
+
+// ── Keyword Density ──
+function renderKeywordDensity(apps, kwResults) {
+  const sec=document.getElementById('density-section');
+  if(!kwResults.length){sec.style.display='none';return;}
+  const container=document.getElementById('density-table'); container.innerHTML='';
+  const wrap=document.createElement('div'); wrap.style.overflowX='auto';
+  const tbl=document.createElement('table'); tbl.className='cmp-table';
+  const thead=document.createElement('thead'), hr=document.createElement('tr');
+  hr.innerHTML='<th>Keyword</th>'+apps.map((a,i)=>`<th style="${i===0?'background:var(--accent-mid);color:var(--accent)':''}">${esc(a.name.length>16?a.name.slice(0,14)+'…':a.name)}</th>`).join('');
+  thead.appendChild(hr); tbl.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  const countIn=(text,kw)=>{let n=0,pos=0;while((pos=text.indexOf(kw,pos))!==-1){n++;pos+=kw.length;}return n;};
+  for(const {keyword} of kwResults){
+    const tr=document.createElement('tr');
+    const kw=keyword.toLowerCase();
+    let cells=`<td class="kw-kw">${esc(keyword)}</td>`;
+    apps.forEach((a,i)=>{
+      const tc=countIn((a.name||'').toLowerCase(),kw);
+      const dc=countIn((a.description||'').toLowerCase(),kw);
+      const total=tc+dc;
+      const hl=i===0?'background:var(--accent-mid);':'' ;
+      if(total===0) cells+=`<td style="${hl}"><span class="null-val">0</span></td>`;
+      else cells+=`<td style="${hl}"><span class="${total>=3?'pill best':''}">${total}</span><span style="color:var(--muted);font-size:11px;margin-left:4px">${tc}T+${dc}D</span></td>`;
+    });
+    tr.innerHTML=cells; tbody.appendChild(tr);
+  }
+  tbl.appendChild(tbody); wrap.appendChild(tbl); container.appendChild(wrap);
   sec.style.display='block';
 }
 
