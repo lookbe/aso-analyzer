@@ -176,6 +176,23 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .kw-tbl tr:hover td{background:var(--surface-2)}
 .kw-kw{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;white-space:nowrap}
 .kw-rank-cell{text-align:center}
+.llm-tabs{display:none;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:12px}
+.llm-tab{padding:8px 14px;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.llm-tab:hover{color:var(--text)}
+.llm-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.llm-tab .dot{color:var(--success);margin-left:5px;font-size:10px}
+.llm-empty{color:var(--muted);font-size:13.5px}
+.kw-cache-note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.kw-cache-note button{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;padding:0}
+.kw-cache-note button:hover{text-decoration:underline}
+.soc-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.soc-bar .soc-lbl{font-size:12px;color:var(--muted);margin-right:2px}
+.soc-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:12.5px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s}
+.soc-btn:hover{border-color:var(--accent)}
+.soc-btn.on{border-color:var(--success);color:var(--success)}
+.soc-btn.wait{opacity:.7;cursor:default}
+.soc-metric{font-size:11px;white-space:nowrap;display:block;color:var(--text-2)}
+.trend-cell svg{display:block;margin:0 auto}
 .vol-dots{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;color:var(--accent)}
 .kw-icons{display:flex;flex-wrap:nowrap;gap:3px;align-items:center}
 .kw-ico-link{display:inline-flex;flex-shrink:0;border-radius:6px;overflow:hidden;transition:transform .12s,box-shadow .12s}
@@ -362,7 +379,7 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
 
     <div class="blk">
       <p class="blk-title">Competitors</p>
-      <p class="blk-desc">Add up to 4 competitor apps</p>
+      <p class="blk-desc">Add up to 10 competitor apps</p>
       <div id="comp-list"></div>
       <button class="add-btn" id="add-btn">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
@@ -442,10 +459,12 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
         <button class="ex-btn" onclick="addCustomKeyword()">Add</button>
         <button class="kw-run-btn" id="kw-run-btn" onclick="analyzeKeywords()">Analyze Keywords ▶</button>
       </div>
+      <div class="soc-bar" id="soc-bar"></div>
     </div>
 
     <div class="r-section" id="kw-results-section" style="display:none">
       <p class="r-h">Keyword Rankings</p>
+      <div class="kw-cache-note" id="kw-cache-note"></div>
       <div id="kw-cards"></div>
     </div>
 
@@ -471,18 +490,37 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
       <div class="llm-status" id="llm-status"></div>
       <div class="llm-model-row" id="llm-model-row">
         <select class="llm-model-sel" id="llm-model-sel"></select>
-        <select class="llm-model-sel" id="llm-mode-sel" style="flex:none;width:auto;min-width:200px">
-          <option value="competitive">Competitive Analysis</option>
-          <option value="keywords">Keyword Strategy</option>
-          <option value="metadata_pkg">📦 Full Metadata Package</option>
-          <option value="description">Rewrite Description</option>
-          <option value="positioning">Positioning &amp; Differentiation</option>
-          <option value="localization">Localization Opportunities</option>
-        </select>
-        <button class="llm-btn primary" id="llm-analyze-btn" onclick="analyzeWithLLM()">Get AI Analysis</button>
+        <button class="llm-btn primary" id="llm-analyze-btn" onclick="analyzeWithLLM()">✨ Analyze</button>
       </div>
+      <div class="llm-tabs" id="llm-tabs"></div>
       <div class="llm-output-wrap" id="llm-output-wrap">
-        <div class="llm-output" id="llm-output"></div>
+        <div id="llm-panes"></div>
+      </div>
+
+      <!-- Export for other AI -->
+      <div class="ai-sub" id="export-ai">
+        <p class="ai-sub-title">Export for other AI</p>
+        <p class="ai-sub-desc">Bundle your apps, keyword data (volume, difficulty, trend, social, rankings) and an analysis prompt, then paste it into ChatGPT, Claude or Gemini — no local model needed.</p>
+        <div class="llm-model-row" style="display:flex">
+          <select class="llm-model-sel" id="export-mode-sel" style="flex:none;width:auto;min-width:230px">
+            <option value="deep">🔬 Deep analysis (everything)</option>
+            <option value="competitive">Competitive Analysis</option>
+            <option value="keywords">Keyword Strategy</option>
+            <option value="metadata_pkg">📦 Full Metadata Package</option>
+            <option value="description">Rewrite Description</option>
+            <option value="positioning">Positioning &amp; Differentiation</option>
+            <option value="localization">Localization Opportunities</option>
+          </select>
+          <button class="llm-btn primary" onclick="exportCopy()">📋 Copy prompt</button>
+          <button class="llm-btn secondary" onclick="exportDownload('md')">⬇ Markdown</button>
+          <button class="llm-btn secondary" onclick="exportDownload('json')">⬇ JSON data</button>
+        </div>
+        <div class="llm-model-row" style="display:flex;margin-bottom:0">
+          <span style="font-size:12px;color:var(--muted)">Copy &amp; open in:</span>
+          <button class="llm-btn secondary" onclick="exportOpen('chatgpt')">ChatGPT</button>
+          <button class="llm-btn secondary" onclick="exportOpen('claude')">Claude</button>
+          <button class="llm-btn secondary" onclick="exportOpen('gemini')">Gemini</button>
+        </div>
       </div>
 
       <!-- Screenshot Analysis -->
@@ -551,11 +589,11 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
 </div>
 
 <script>
-const COLORS = ['#4d8af5','#22c55e','#f59e0b','#a78bfa','#f43f5e'];
+const COLORS = ['#4d8af5','#22c55e','#f59e0b','#a78bfa','#f43f5e','#14b8a6','#f97316','#ec4899','#84cc16','#06b6d4','#8b5cf6'];
 const COUNTRY = 'us';
 
 let compCount = 0, chartR = null, chartN = null;
-let lastApps = null, lastKwResults = null;
+let lastApps = null, lastKwResults = null, lastKwMeta = null;
 const appCache = {}; // url → fetched app data
 
 // ── Helpers ──
@@ -712,11 +750,76 @@ function extractKeywords(apps, limit=20) {
 }
 
 // ── Keyword ranking ──
-async function fetchKeywordRanking(keyword, apps) {
-  const ranks = apps.map(()=>({pos:null,error:false}));
-  let iosTop=[], androidTop=[], iosTotalResults=0;
-  const hasIOS = apps.some(a=>a.store==='ios'&&a.trackId);
-  const hasAndroid = apps.some(a=>a.store==='android'&&a.packageId);
+// ── Keyword data cache (localStorage) ──
+// Store searches, volume, trend and social metrics are cached per keyword (not per app), so changing the
+// tracked apps only recomputes their ranks from the cached search results — no new network calls.
+const KW_CACHE_KEY='aso-kw-cache-v1';
+const KW_TTL={'s-ios':6*3600e3,'s-and':6*3600e3,vol:24*3600e3,trend:6*3600e3,social:6*3600e3};
+const KW_CACHE_MAX=400;
+let kwCache=null, kwStats={hit:0,miss:0,oldest:Date.now()};
+function kwCacheLoad() {
+  if(kwCache) return kwCache;
+  try { kwCache=JSON.parse(localStorage.getItem(KW_CACHE_KEY)||'{}')||{}; } catch(_) { kwCache={}; }
+  return kwCache;
+}
+function kwCacheSave() {
+  const c=kwCacheLoad(), keys=Object.keys(c);
+  if(keys.length>KW_CACHE_MAX) keys.sort((a,b)=>c[a].t-c[b].t).slice(0,keys.length-KW_CACHE_MAX).forEach(k=>delete c[k]);
+  try { localStorage.setItem(KW_CACHE_KEY,JSON.stringify(c)); } catch(_) {}
+}
+function cacheGet(type,key,force) {
+  const e=kwCacheLoad()[`${type}|${COUNTRY}|${key}`];
+  if(force||!e||Date.now()-e.t>(KW_TTL[type]||0)){ kwStats.miss++; return null; }
+  kwStats.hit++; kwStats.oldest=Math.min(kwStats.oldest,e.t);
+  return e.v;
+}
+function cacheSet(type,key,v) { kwCacheLoad()[`${type}|${COUNTRY}|${key}`]={t:Date.now(),v}; kwCacheSave(); }
+function clearKwCache() { kwCache={}; try{localStorage.removeItem(KW_CACHE_KEY);}catch(_){} showToast('Keyword cache cleared'); }
+// Look up keywords in the cache and call `fetcher` only for the missing ones
+async function cachedBatch(type, keywords, force, fetcher, valid) {
+  const out={}, missing=[];
+  for(const k of keywords){ const v=cacheGet(type,k.toLowerCase(),force); if(v!==null) out[k.toLowerCase()]=v; else missing.push(k); }
+  if(missing.length){
+    const fresh=await fetcher(missing)||{};
+    for(const [k,v] of Object.entries(fresh)){ out[k]=v; if(valid(v)) cacheSet(type,k,v); }
+  }
+  return out;
+}
+function renderCacheNote() {
+  const el=document.getElementById('kw-cache-note'); if(!el) return;
+  const total=kwStats.hit+kwStats.miss;
+  const ago=ms=>ms<90e3?'just now':ms<5400e3?Math.round(ms/60e3)+' min ago':Math.round(ms/3600e3)+' h ago';
+  const txt=kwStats.hit===0?'Fetched live data':`⚡ ${kwStats.hit} of ${total} lookups served from cache (oldest ${ago(Date.now()-kwStats.oldest)})`;
+  el.innerHTML=`<span>${txt}</span><button onclick="analyzeKeywords(true)" title="Ignore the cache and re-fetch rankings, volume, trends and social metrics">↻ Refresh live data</button><button onclick="clearKwCache()">Clear cache</button>`;
+}
+
+async function fetchKeywordRanking(keyword, apps, force=false) {
+  const kl=keyword.toLowerCase();
+  const wantIos=apps.some(a=>a.store==='ios'&&a.trackId), wantAnd=apps.some(a=>a.store==='android'&&a.packageId);
+  let ios=wantIos?cacheGet('s-ios',kl,force):null, and=wantAnd?cacheGet('s-and',kl,force):null;
+  let iosErr=false, andErr=false;
+  if((wantIos&&!ios)||(wantAnd&&!and)){
+    const live=await fetchKeywordSearchLive(keyword,wantIos&&!ios,wantAnd&&!and);
+    if(wantIos&&!ios){
+      if(live.iosIds){ ios={ids:live.iosIds,top:live.iosTop,total:live.iosTotalResults}; if(ios.ids.length) cacheSet('s-ios',kl,ios); }
+      else iosErr=live.iosErr;
+    }
+    if(wantAnd&&!and){
+      if(live.androidAll){ and={all:live.androidAll}; if(and.all.length) cacheSet('s-and',kl,and); }
+      else andErr=live.androidErr;
+    }
+  }
+  const ranks=apps.map(a=>{
+    if(a.store==='ios'&&a.trackId){ if(!ios) return {pos:null,error:iosErr}; const p=ios.ids.indexOf(a.trackId); return {pos:p>=0?p+1:null,error:false}; }
+    if(a.store==='android'&&a.packageId){ if(!and) return {pos:null,error:andErr}; const p=and.all.findIndex(x=>x.packageId===a.packageId); return {pos:p>=0?p+1:null,error:false}; }
+    return {pos:null,error:false};
+  });
+  return {keyword,ranks,iosTop:ios?.top||[],androidTop:and?and.all.slice(0,10).map((a,i)=>({...a,pos:i+1})):[],iosTotalResults:ios?.total||0};
+}
+
+// Live store searches only (no app knowledge) — results are cached per keyword and ranks are derived from them
+async function fetchKeywordSearchLive(keyword, hasIOS, hasAndroid) {
+  let iosTop=[], iosIds=null, iosTotalResults=0, androidAll=null, iosErr=false, androidErr=false;
 
   await Promise.all([
     hasIOS ? (async()=>{
@@ -728,14 +831,14 @@ async function fetchKeywordRanking(keyword, apps) {
         iosTotalResults=results.length;
         iosTop = results.slice(0,10).map((r,i)=>({name:r.trackName,trackId:String(r.trackId),icon:r.artworkUrl60||r.artworkUrl100,pos:i+1,ratingCount:r.userRatingCount??0,rating:r.averageUserRating??0}));
         const ids = results.map(r=>String(r.trackId));
-        apps.forEach((a,i)=>{ if(a.store==='ios'&&a.trackId){const p=ids.indexOf(a.trackId);ranks[i].pos=p>=0?p+1:null;} });
-      } catch(_) { apps.forEach((a,i)=>{ if(a.store==='ios') ranks[i].error=true; }); }
+        iosIds=ids;
+      } catch(_) { iosErr=true; }
     })() : Promise.resolve(),
 
     hasAndroid ? (async()=>{
       try {
         const r = await withTimeout(fetch(`/proxy?url=${encodeURIComponent(`https://play.google.com/store/search?q=${encodeURIComponent(keyword)}&c=apps&hl=en&gl=us`)}`),18000);
-        if (!r.ok) { apps.forEach((a,i)=>{if(a.store==='android')ranks[i].error=true;}); return; }
+        if (!r.ok) { androidErr=true; return; }
         const html = await r.text();
         const seen=new Set(), all=[];
 
@@ -763,19 +866,18 @@ async function fetchKeywordRanking(keyword, apps) {
           const idRe=/\/store\/apps\/details\?id=([a-zA-Z0-9._]+)/g;
           while((m=idRe.exec(html))!==null){if(!seen.has(m[1])){seen.add(m[1]);all.push({packageId:m[1],name:null,icon:nearestIcon(m.index)});}}
         }
-        androidTop = all.slice(0,10).map((a,i)=>({...a,pos:i+1}));
-        const pkgs = all.map(a=>a.packageId);
-        apps.forEach((a,i)=>{ if(a.store==='android'&&a.packageId){const p=pkgs.indexOf(a.packageId);ranks[i].pos=p>=0?p+1:null;} });
-      } catch(_) { apps.forEach((a,i)=>{ if(a.store==='android') ranks[i].error=true; }); }
+        androidAll = all;
+      } catch(_) { androidErr=true; }
     })() : Promise.resolve()
   ]);
 
-  return {keyword,ranks,iosTop,androidTop,iosTotalResults};
+  return {iosIds,iosTop,iosTotalResults,androidAll,iosErr,androidErr};
 }
 
 // ── Render ──
 function renderAll(apps) {
   lastApps=apps;
+  if(typeof resetLLMResults==='function') resetLLMResults();
   renderCards(apps);
   renderCharts(apps);
   renderTable(apps);
@@ -968,6 +1070,7 @@ function addCustomKeyword() {
   document.getElementById('kw-chips').appendChild(makeChip(val,true));
   input.value='';
 }
+loadSocialStatus();
 document.getElementById('kw-add-input')?.addEventListener('keydown',e=>{if(e.key==='Enter')addCustomKeyword();});
 // ── Keyword volume: ASA → autocomplete fallback ──
 async function fetchASAVolume(keywords, adamId) {
@@ -979,7 +1082,7 @@ async function fetchASAVolume(keywords, adamId) {
     const data=await r.json();
     if(!Array.isArray(data?.data)) return {};
     return Object.fromEntries(data.data.map(d=>[d.keyword?.toLowerCase(),d.searchPopularityValue]));
-  } catch(_) { return {}; }
+  } catch(e) { console.warn('ASA volume failed',e); return {}; }
 }
 
 function autocompleteScore(hints, kw) {
@@ -998,29 +1101,133 @@ async function fetchAutoCompleteVolume(keywords, country) {
       const url=`https://search.itunes.apple.com/WebObjects/MZSearchHints.woa/wa/hints?media=software&term=${encodeURIComponent(kw)}&country=${country}`;
       const r=await withTimeout(fetch(`/proxy?url=${encodeURIComponent(url)}`),8000);
       if(!r.ok) return;
-      const data=await r.json();
-      const hints=(data.hints||[]).map(h=>(h.term||'').toLowerCase());
+      // Apple returns an XML plist: <dict><key>term</key><string>…</string></dict> per hint
+      const doc=new DOMParser().parseFromString(await r.text(),'text/xml');
+      const hints=[...doc.querySelectorAll('dict > key')].filter(k=>k.textContent==='term')
+        .map(k=>(k.nextElementSibling?.textContent||'').toLowerCase());
       map[kw.toLowerCase()]=autocompleteScore(hints,kw);
-    } catch(_) {}
+    } catch(e) { console.warn('Autocomplete volume failed for',kw,e); }
   }));
   return map;
 }
 
-async function fetchKeywordVolume(keywords, apps) {
+async function fetchKeywordVolume(keywords, apps, force=false) {
   const iosApp=apps?.find(a=>a.store==='ios'&&a.trackId);
-  let iosMap={}, iosSource=null;
-  if(iosApp){
-    const asaMap=await fetchASAVolume(keywords,iosApp.trackId);
-    if(Object.keys(asaMap).length>0){iosMap=asaMap;iosSource='asa';}
-    else{
-      const acMap=await fetchAutoCompleteVolume(keywords,COUNTRY);
-      if(Object.keys(acMap).length>0){iosMap=acMap;iosSource='autocomplete';}
-    }
-  }
-  return {iosMap,iosSource,androidMap:{},androidSource:null};
+  const none={iosMap:{},iosSource:null,androidMap:{},androidSource:null};
+  if(!iosApp) return none;
+  const m=await cachedBatch('vol',keywords,force,async miss=>{
+    let map=await fetchASAVolume(miss,iosApp.trackId), src='asa';
+    if(!Object.keys(map).length){ map=await fetchAutoCompleteVolume(miss,COUNTRY); src='autocomplete'; }
+    return Object.fromEntries(Object.entries(map).map(([k,v])=>[k,{v,src}]));
+  },e=>e&&e.v!=null);
+  const ents=Object.entries(m);
+  if(!ents.length) return none;
+  return {...none,iosMap:Object.fromEntries(ents.map(([k,e])=>[k,e.v])),iosSource:ents.every(([,e])=>e.src==='asa')?'asa':'autocomplete'};
 }
 
-async function analyzeKeywords() {
+// ── Keyword trend: Google Trends (web + YouTube) via /api/trends ──
+async function fetchKeywordTrends(keywords, force=false) {
+  return cachedBatch('trend',keywords,force,async miss=>{
+    try {
+      const r=await withTimeout(fetch(`/api/trends?keywords=${encodeURIComponent(miss.join(','))}&geo=${COUNTRY}${force?'&fresh=1':''}`),20000*miss.length+10000);
+      return r.ok?await r.json():{};
+    } catch(e) { console.warn('Trend fetch failed',e); return {}; }
+  },v=>Object.values(v||{}).some(x=>x.series?.length));
+}
+
+// Combine sources into one series (mean across sources) + % change of last 8 wks vs prior 8 wks
+function summarizeTrend(sources) {
+  const list=Object.values(sources||{}).filter(s=>s.series?.length);
+  if(!list.length) return null;
+  const n=Math.min(...list.map(s=>s.series.length));
+  const series=Array.from({length:n},(_,i)=>list.reduce((a,s)=>a+s.series[s.series.length-n+i],0)/list.length);
+  const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const recent=avg(series.slice(-8)), prior=avg(series.slice(-16,-8));
+  const change=prior>0?(recent-prior)/prior*100:(recent>0?100:0);
+  const per=list.map(s=>{const a=s.series.slice(-8),b=s.series.slice(-16,-8);const p=avg(b);return `${s.label}: ${Math.round(avg(a))}/100 (${p>0?((avg(a)-p)/p*100>=0?'+':'')+Math.round((avg(a)-p)/p*100)+'%':'n/a'})`;});
+  return {series,change,recent,per,failed:Object.values(sources).filter(s=>s.error).map(s=>s.label)};
+}
+function trendCell(sources) {
+  const t=summarizeTrend(sources);
+  if(!t) return `<td class="kw-rank-cell center"><span class="null-val">—</span></td>`;
+  const W=70,H=22,max=Math.max(...t.series,1);
+  const pts=t.series.map((v,i)=>`${(i/(t.series.length-1)*W).toFixed(1)},${(H-1-v/max*(H-2)).toFixed(1)}`).join(' ');
+  const up=t.change>=5, down=t.change<=-5;
+  const color=up?'var(--success)':down?'#ef4444':'var(--muted)';
+  const arrow=up?'▲':down?'▼':'■';
+  const tip=`12-month search interest (0–100), last 8 wks vs prior 8 wks\n${t.per.join('\n')}${t.failed.length?'\nUnavailable: '+t.failed.join(', '):''}`;
+  return `<td class="kw-rank-cell center trend-cell" title="${esc(tip)}"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg><span style="font-size:10px;font-weight:700;color:${color}">${arrow} ${t.change>=0?'+':''}${Math.round(t.change)}%</span></td>`;
+}
+
+// ── Social accounts: log in via a real Chrome window (server-side), then pull hashtag metrics ──
+const SOC_ICON={tiktok:'🎵',instagram:'📷',twitter:'𝕏'};
+let socStatus={}, socPoll=null;
+async function loadSocialStatus() {
+  try { socStatus=await (await fetch('/api/social/status')).json(); } catch(_) { socStatus={}; }
+  renderSocialBar();
+  const pending=Object.values(socStatus).some(s=>s.pending);
+  clearTimeout(socPoll);
+  if(pending) socPoll=setTimeout(loadSocialStatus,2000);
+}
+function renderSocialBar() {
+  const bar=document.getElementById('soc-bar'); if(!bar) return;
+  const ids=Object.keys(socStatus);
+  if(!ids.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  bar.innerHTML='<span class="soc-lbl">Social accounts</span>'+ids.map(id=>{
+    const s=socStatus[id];
+    const cls=s.connected?'on':s.pending?'wait':'';
+    const txt=s.connected?`${SOC_ICON[id]} ${esc(s.label)} ✓ Logged in`:s.pending?`${SOC_ICON[id]} ${esc(s.label)} — finish login in the Chrome window…`:`${SOC_ICON[id]} Log in to ${esc(s.label)}`;
+    const tip=s.connected?'Click to log out (deletes the saved session)':'Opens a Chrome window on this PC. Log in there; the session is saved locally.';
+    return `<button class="soc-btn ${cls}" title="${tip}" onclick="socialClick('${id}')">${txt}</button>`;
+  }).join('');
+}
+async function socialClick(id) {
+  const s=socStatus[id]; if(!s||s.pending) return;
+  if(s.connected){ await fetch(`/api/social/${id}/logout`,{method:'POST'}); }
+  else {
+    const r=await fetch(`/api/social/${id}/login`,{method:'POST'});
+    if(!r.ok){const e=await r.json().catch(()=>({}));alert(e.error||'Could not open login window.');}
+  }
+  loadSocialStatus();
+}
+async function fetchSocialMetrics(keywords, force=false) {
+  const conn=Object.entries(socStatus).filter(([,x])=>x.connected).map(([id])=>id);
+  if(!conn.length) return {};
+  const out={}, miss=[];
+  for(const k of keywords){
+    const v=cacheGet('social',k.toLowerCase(),force);
+    if(v&&conn.every(id=>v[id])) out[k.toLowerCase()]=v; else miss.push(k);
+  }
+  if(miss.length){
+    try {
+      const r=await withTimeout(fetch(`/api/social/metrics?keywords=${encodeURIComponent(miss.join(','))}${force?'&fresh=1':''}`),60000*miss.length+30000);
+      const data=r.ok?await r.json():{};
+      for(const [k,m] of Object.entries(data)){
+        out[k]=m;
+        const good=Object.fromEntries(Object.entries(m).filter(([,d])=>!d.error));
+        if(Object.keys(good).length) cacheSet('social',k,good);
+      }
+      loadSocialStatus();                       // a session may have expired
+    } catch(e) { console.warn('Social metrics failed',e); }
+  }
+  return out;
+}
+const fmtBig=n=>n==null?'?':n>=1e9?(n/1e9).toFixed(1)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
+function socialCell(m) {
+  const lines=Object.entries(m||{}).map(([id,d])=>{
+    const ic=SOC_ICON[id];
+    if(d.error) return `<span class="soc-metric" style="color:var(--muted)" title="${esc(d.error)}">${ic} —</span>`;
+    if(id==='tiktok') return `<span class="soc-metric" title="TikTok #hashtag: ${fmtBig(d.posts)} videos">${ic} ${fmtBig(d.views)} views</span>`;
+    if(id==='instagram') return `<span class="soc-metric" title="Instagram #hashtag total posts">${ic} ${fmtBig(d.posts)} posts</span>`;
+    return `<span class="soc-metric" title="Estimated from the ${d.sample} most recent matching posts">${ic} ~${d.postsPerHour}/h</span>`;
+  });
+  return `<td class="kw-rank-cell center">${lines.join('')||'<span class="null-val">—</span>'}</td>`;
+}
+
+async function analyzeKeywords(force) {
+  force=force===true;
+  kwStats={hit:0,miss:0,oldest:Date.now()};
   if(!lastApps){alert('Run an analysis first.');return;}
   const selected=[...document.querySelectorAll('#kw-chips .kw-chip.on')].map(c=>c.dataset.kw);
   if(!selected.length){alert('Select at least one keyword.');return;}
@@ -1028,12 +1235,16 @@ async function analyzeKeywords() {
   const kwSec=document.getElementById('kw-results-section');
   document.getElementById('kw-cards').innerHTML=`<p style="color:var(--muted);font-size:13px;padding:10px 0">Checking ${selected.length} keyword${selected.length>1?'s':''}…</p>`;
   kwSec.style.display='block';
-  const [kwResults,volData]=await Promise.all([
-    Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps))),
-    fetchKeywordVolume(selected,lastApps),
+  const [kwResults,volData,trendData,socData]=await Promise.all([
+    Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps,force))),
+    fetchKeywordVolume(selected,lastApps,force),
+    fetchKeywordTrends(selected,force),
+    fetchSocialMetrics(selected,force),
   ]);
   lastKwResults=kwResults;
-  renderKeywordCards(lastApps,kwResults,volData);
+  lastKwMeta={volData,trendData,socData};
+  renderCacheNote();
+  renderKeywordCards(lastApps,kwResults,volData,trendData,socData);
   renderKeywordGaps(lastApps,kwResults);
   renderKeywordDensity(lastApps,kwResults);
   btn.disabled=false; btn.textContent='Analyze Keywords ▶';
@@ -1065,13 +1276,14 @@ function diffCell(score) {
   return `<td class="kw-rank-cell center"><span style="font-size:11px;font-weight:700;color:${color}">${label}</span><span style="color:var(--muted);font-size:10px;display:block">${score}/100</span></td>`;
 }
 
-function renderKeywordCards(apps, kwResults, volData={}) {
+function renderKeywordCards(apps, kwResults, volData={}, trendData={}, socData={}) {
   const {iosMap={},iosSource=null,androidMap={},androidSource=null}=volData;
   const sec=document.getElementById('kw-results-section'), container=document.getElementById('kw-cards');
   container.innerHTML='';
   const hasIOS=apps.some(a=>a.store==='ios'), hasAndroid=apps.some(a=>a.store==='android');
   const hasIosVol=hasIOS&&Object.keys(iosMap).length>0;
   const hasAndVol=hasAndroid&&Object.keys(androidMap).length>0;
+  const hasSoc=Object.values(socData).some(m=>Object.keys(m).length);
   const trackedIos=new Set(apps.filter(a=>a.store==='ios'&&a.trackId).map(a=>a.trackId));
   const trackedAnd=new Set(apps.filter(a=>a.store==='android'&&a.packageId).map(a=>a.packageId));
 
@@ -1086,6 +1298,8 @@ function renderKeywordCards(apps, kwResults, volData={}) {
     headCols+=`<th class="center" title="${tip}">${lbl}</th>`;
   }
   if(hasAndVol) headCols+=`<th class="center" title="Play Store autocomplete estimate (1–5)">Vol 🤖~</th>`;
+  headCols+='<th class="center" title="Google Search + YouTube search interest over the last 12 months (Google Trends), with change of last 8 weeks vs the prior 8">Trend</th>';
+  if(hasSoc) headCols+='<th class="center" title="Hashtag totals from your logged-in TikTok / Instagram sessions; X shows estimated posts per hour">Social</th>';
   if(hasIOS) headCols+='<th class="center" title="Computed from top-10 avg review count, rating, and result count. Higher = harder to rank.">Difficulty</th>';
   apps.forEach(a=>{ headCols+=`<th class="center">${esc(a.name.length>12?a.name.slice(0,10)+'…':a.name)} ${a.store==='ios'?'🍎':'🤖'}</th>`; });
   if(hasIOS) headCols+='<th>Top 🍎 Apps</th>';
@@ -1117,6 +1331,8 @@ function renderKeywordCards(apps, kwResults, volData={}) {
       const vol=androidMap[keyword.toLowerCase()];
       cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,androidSource):'<span class="null-val">—</span>'}</td>`;
     }
+    cells+=trendCell(trendData[keyword.toLowerCase()]);
+    if(hasSoc) cells+=socialCell(socData[keyword.toLowerCase()]);
     if(hasIOS) cells+=diffCell(computeDifficulty(iosTop,iosTotalResults));
     apps.forEach((_,i)=>{
       const r=ranks[i];
@@ -1277,10 +1493,10 @@ function reNumberComps() {
   document.querySelectorAll('#comp-list .comp-row').forEach((r,i) => r.querySelector('.row-lbl').textContent = `Comp. ${i+1}`);
   compCount = document.querySelectorAll('#comp-list .comp-row').length;
 }
-function updateAddBtn() { document.getElementById('add-btn').disabled = compCount >= 4; }
+function updateAddBtn() { document.getElementById('add-btn').disabled = compCount >= 10; }
 
 document.getElementById('add-btn').addEventListener('click', () => {
-  if (compCount >= 4) return; compCount++; document.getElementById('comp-list').appendChild(makeCompRow(compCount)); updateAddBtn();
+  if (compCount >= 10) return; compCount++; document.getElementById('comp-list').appendChild(makeCompRow(compCount)); updateAddBtn();
 });
 
 // Init your-app picker
@@ -1589,10 +1805,12 @@ async function analyzeReviewsWithAI(block) {
   const appName=block.dataset.appName||'this app';
   const reviewText=reviews.slice(0,40).map(r=>`[${r.rating}★] "${r.title}": ${r.body}`).join('\n');
   const prompt=`Analyze these ${reviews.length} App Store reviews for "${appName}":\n\n${reviewText}\n\nProvide:\n1. **Sentiment Summary** — overall tone and rating distribution insight\n2. **Top Praise Points** — what users love (top 3–5)\n3. **Top Complaints** — most common pain points (top 3–5)\n4. **Feature Requests** — what users keep asking for\n5. **ASO Insights** — specific words and phrases from reviews that should appear in the store listing\n6. **Actionable Improvements** — prioritized list of what to address first`;
-  const wrap=document.getElementById('llm-output-wrap'), out=document.getElementById('llm-output');
-  wrap.style.display='block'; out.textContent='Analyzing reviews…';
+  lastReviewBlock=block; llmMode='reviews';
+  const wrap=document.getElementById('llm-output-wrap'), out=llmPane('reviews');
+  if(llmBusy.reviews) return;
+  llmBusy.reviews=true; showLLMTabs(true); out.textContent='Analyzing reviews…';
   wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
-  streamLLM(url,model,prompt,out,()=>{});
+  streamLLM(url,model,prompt,out,text=>{llmBusy.reviews=false; if(text) llmDone.reviews=true; renderLLMTabs();});
 }
 
 // ── Open reviews in external AI ──
@@ -2022,26 +2240,130 @@ async function connectLLM() {
     const models=data.data||[];
     if(!models.length) throw new Error('No models loaded in LM Studio');
     document.getElementById('llm-model-sel').innerHTML=models.map(m=>`<option value="${esc(m.id)}">${esc(m.id)}</option>`).join('');
-    modelRow.style.display='flex';
+    modelRow.style.display='flex'; showLLMTabs(true);
     statusEl.className='llm-status ok'; statusEl.textContent=`✓ Connected — ${models.length} model${models.length!==1?'s':''} available`;
   } catch(e) {
     statusEl.className='llm-status err'; statusEl.textContent=`✗ ${e.message} — Is LM Studio running with the local server enabled?`;
-    modelRow.style.display='none';
+    modelRow.style.display='none'; showLLMTabs(false);
   } finally { btn.disabled=false; }
 }
 
+// ── Local AI analysis: one tab per analysis type, each keeps its own result ──
+const LLM_MODES=[['competitive','Competitive'],['keywords','Keyword Strategy'],['metadata_pkg','📦 Metadata Package'],['description','Description'],['positioning','Positioning'],['localization','Localization'],['reviews','💬 Reviews']];
+let llmMode='competitive', lastReviewBlock=null; const llmDone={}, llmBusy={};
+function llmPane(mode) {
+  const wrap=document.getElementById('llm-panes');
+  let el=document.getElementById('llm-pane-'+mode);
+  if(!el){ el=document.createElement('div'); el.id='llm-pane-'+mode; el.className='llm-output'; el.style.display='none'; el.innerHTML='<span class="llm-empty">Not analyzed yet — click “✨ Analyze”.</span>'; wrap.appendChild(el); }
+  return el;
+}
+function renderLLMTabs() {
+  document.getElementById('llm-tabs').innerHTML=LLM_MODES.map(([id,lbl])=>
+    `<button class="llm-tab${id===llmMode?' on':''}" onclick="selectLLMTab('${id}')">${lbl}${llmDone[id]?'<span class="dot">●</span>':''}</button>`).join('');
+  LLM_MODES.forEach(([id])=>{ llmPane(id).style.display=id===llmMode?'block':'none'; });
+  const btn=document.getElementById('llm-analyze-btn');
+  btn.disabled=!!llmBusy[llmMode];
+  btn.textContent=llmBusy[llmMode]?'Generating…':llmDone[llmMode]?'↻ Re-analyze':'✨ Analyze';
+}
+function selectLLMTab(mode) { llmMode=mode; renderLLMTabs(); }
+function showLLMTabs(on) {
+  document.getElementById('llm-tabs').style.display=on?'flex':'none';
+  document.getElementById('llm-output-wrap').style.display=on?'block':'none';
+  if(on) renderLLMTabs();
+}
+function resetLLMResults() {
+  for(const k of Object.keys(llmDone)) delete llmDone[k];
+  if(!document.getElementById('llm-panes')) return;
+  LLM_MODES.forEach(([id])=>{ const el=document.getElementById('llm-pane-'+id); if(el&&!llmBusy[id]) el.innerHTML='<span class="llm-empty">Not analyzed yet — click “✨ Analyze”.</span>'; });
+  if(document.getElementById('llm-tabs').style.display==='flex') renderLLMTabs();
+}
 async function analyzeWithLLM() {
   if(!lastApps){alert('Run an analysis first.');return;}
+  const mode=llmMode; if(llmBusy[mode]) return;
+  if(mode==='reviews'){ if(lastReviewBlock) return analyzeReviewsWithAI(lastReviewBlock); alert('Load reviews first, then click “Analyze with AI” in the Reviews section.'); return; }
   const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
   const model=document.getElementById('llm-model-sel').value;
-  const mode=document.getElementById('llm-mode-sel').value;
-  const outputWrap=document.getElementById('llm-output-wrap'), outputEl=document.getElementById('llm-output');
-  const btn=document.getElementById('llm-analyze-btn');
-  outputWrap.style.display='block'; outputEl.textContent='Generating…'; btn.disabled=true;
-  await streamLLM(url,model,buildLLMPrompt(mode),outputEl,()=>{btn.disabled=false;});
+  const outputEl=llmPane(mode);
+  llmBusy[mode]=true; outputEl.textContent='Generating…'; renderLLMTabs();
+  await streamLLM(url,model,buildLLMPrompt(mode),outputEl,text=>{
+    llmBusy[mode]=false; if(text) llmDone[mode]=true; renderLLMTabs();
+  });
 }
 
-function buildLLMPrompt(mode='competitive') {
+// ── Export for other AI ──
+function copyToClipboard(text) {
+  return navigator.clipboard.writeText(text).catch(()=>{
+    const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  });
+}
+function exportPrompt() {
+  if(!lastApps){alert('Run an analysis first.');return null;}
+  return buildLLMPrompt(document.getElementById('export-mode-sel').value,true);
+}
+async function exportCopy() {
+  const p=exportPrompt(); if(!p) return;
+  await copyToClipboard(p); showToast(`Prompt copied (${Math.round(p.length/1000)}k chars) — paste it into your AI`);
+}
+function exportOpen(service) {
+  const p=exportPrompt(); if(!p) return;
+  copyToClipboard(p); window.open(AI_URLS[service],'_blank','noopener');
+  showToast(`Prompt copied — paste it in ${service==='chatgpt'?'ChatGPT':service==='gemini'?'Gemini':'Claude'} (Ctrl+V)`);
+}
+function downloadFile(name,text,type) {
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function exportDownload(kind) {
+  if(!lastApps){alert('Run an analysis first.');return;}
+  const day=new Date().toISOString().slice(0,10);
+  if(kind==='md'){ const p=exportPrompt(); if(p) downloadFile(`aso-ai-export-${day}.md`,p,'text/markdown'); }
+  else downloadFile(`aso-data-${day}.json`,JSON.stringify(buildExportJSON(),null,2),'application/json');
+}
+function kwMetrics(r) {
+  const m=lastKwMeta||{}, k=r.keyword.toLowerCase();
+  const vol=m.volData?.iosMap?.[k], trend=summarizeTrend(m.trendData?.[k]);
+  const diff=computeDifficulty(r.iosTop,r.iosTotalResults);
+  return {
+    volume:vol!=null?{score:vol,source:m.volData.iosSource}:null,
+    difficulty:diff,
+    trend:trend?{changePct:Math.round(trend.change),recentInterest:Math.round(trend.recent),series:trend.series.map(v=>Math.round(v))}:null,
+    social:m.socData?.[k]||null,
+  };
+}
+function socialText(soc) {
+  return Object.entries(soc||{}).filter(([,d])=>!d.error).map(([id,d])=>
+    id==='tiktok'?`TikTok ${fmtBig(d.views)} views`:id==='instagram'?`Instagram ${fmtBig(d.posts)} posts`:`X ~${d.postsPerHour} posts/h`).join('; ');
+}
+function buildExportJSON() {
+  return {
+    generatedAt:new Date().toISOString(), country:COUNTRY,
+    apps:lastApps.map(a=>({name:a.name,store:a.store,developer:a.dev,rating:a.rating,ratingCount:a.ratingCount,price:a.price,category:a.category,version:a.version,languages:a.langs,description:a.description})),
+    keywords:(lastKwResults||[]).map(r=>({keyword:r.keyword,...kwMetrics(r),
+      ranks:Object.fromEntries(lastApps.map((a,i)=>[a.name,r.ranks[i]?.pos??null])),
+      topIosApps:(r.iosTop||[]).map(x=>x.name), topAndroidApps:(r.androidTop||[]).map(x=>x.name||x.packageId)})),
+    notes:{volume:'1-5 popularity proxy (Apple Search Ads, or App Store autocomplete position)',difficulty:'0-100, from top-10 review counts, ratings and result count',trend:'Google Search + YouTube interest (0-100), change = last 8 weeks vs prior 8 weeks'},
+  };
+}
+function buildKeywordSection() {
+  if(!lastKwResults?.length) return '';
+  const cell=x=>String(x??'').replace(/\|/g,'/').replace(/\n/g,' ');
+  const hasSoc=lastKwResults.some(r=>socialText(kwMetrics(r).social));
+  const head=['Keyword','Volume (iOS 1-5)','Difficulty (0-100)','Trend (Google+YouTube)',...(hasSoc?['Social']:[]),...lastApps.map(a=>`${a.name} rank`),'Top apps'];
+  let t=`## Keyword Data (${COUNTRY.toUpperCase()})\n\nLegend: Volume = popularity proxy; Difficulty = computed from top-10 review counts/ratings/result count (higher = harder); Trend = search interest, change of last 8 weeks vs prior 8 weeks.\n\n| ${head.join(' | ')} |\n|${head.map(()=>'---').join('|')}|\n`;
+  for(const r of lastKwResults){
+    const m=kwMetrics(r);
+    const row=[r.keyword,m.volume?`${m.volume.score}/5`:'n/a',m.difficulty!=null?m.difficulty:'n/a',
+      m.trend?`${m.trend.changePct>=0?'+':''}${m.trend.changePct}% (interest ${m.trend.recentInterest}/100)`:'n/a',
+      ...(hasSoc?[socialText(m.social)||'n/a']:[]),
+      ...lastApps.map((a,i)=>r.ranks[i]?.pos?`#${r.ranks[i].pos}`:'not ranked'),
+      [...(r.iosTop||[]).slice(0,5).map(x=>x.name),...(r.androidTop||[]).slice(0,5).map(x=>x.name||x.packageId)].join(', ')];
+    t+=`| ${row.map(cell).join(' | ')} |\n`;
+  }
+  return t+'\n';
+}
+
+function buildLLMPrompt(mode='competitive', full=false) {
   let appData='';
   lastApps.forEach((a,i)=>{
     appData+=`### ${i===0?'[YOUR APP] ':''}${a.name}\n`;
@@ -2052,19 +2374,13 @@ function buildLLMPrompt(mode='competitive') {
     if(a.category) appData+=`- Category: ${a.category}\n`;
     if(a.version) appData+=`- Version: ${a.version}\n`;
     if(a.langs!=null) appData+=`- Languages supported: ${a.langs}\n`;
-    if(a.description) appData+=`- Description: ${a.description.slice(0,500)}${a.description.length>500?'…':''}\n`;
+    if(a.description){ const n=full?2000:500; appData+=`- Description: ${a.description.slice(0,n)}${a.description.length>n?'…':''}\n`; }
     appData+='\n';
   });
-  let kwData='';
-  if(lastKwResults?.length){
-    kwData='## Keyword Rankings\n\n';
-    for(const {keyword,ranks} of lastKwResults){
-      const parts=lastApps.map((a,i)=>{const r=ranks[i];return`${a.name}: ${r.pos?`#${r.pos}`:'not ranked'}`;});
-      kwData+=`- "${keyword}": ${parts.join(' | ')}\n`;
-    }
-    kwData+='\n';
-  }
+  const kwData=buildKeywordSection();
   const prompts={
+    deep:`You are a senior ASO and mobile growth strategist. Perform a DEEP competitive analysis using ONLY the data below. Where data is missing or weak (e.g. volume is a proxy, not real search counts), say so rather than guessing.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Executive Summary** — the 5 most important findings and the single biggest opportunity\n2. **Competitive Landscape** — positioning of [YOUR APP] vs each competitor (ratings, review volume, languages, price, category, update cadence)\n3. **Keyword Opportunity Analysis** — use volume, difficulty, trend and social data: (a) high volume + low difficulty, (b) rising trends worth acting on early, (c) keywords where competitors rank top 10 and [YOUR APP] doesn't, (d) keywords to drop. Present as a ranked table with rationale\n4. **Metadata Recommendations** — title, subtitle, iOS keyword field (100 chars), short description, description opening; show character counts\n5. **Creative & Conversion** — screenshot, icon and preview-video recommendations based on competitor patterns\n6. **Localization** — top 5 markets/languages to add, with reasoning\n7. **30/60/90-Day Roadmap** — prioritized actions with expected impact and effort\n8. **Risks & Data Caveats** — what could invalidate these conclusions\n\nBe specific — cite actual numbers from the tables above.`,
+
     competitive:`You are an ASO (App Store Optimization) expert. Analyze the following competitive intelligence.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Competitive Position** — how does [YOUR APP] compare overall?\n2. **Key Strengths** — concrete advantages your app has\n3. **Critical Gaps** — where competitors are winning and why\n4. **Quick Wins** — 3 specific changes to make immediately\n5. **Strategic Opportunities** — longer-term ASO plays based on this data\n\nBe specific — reference actual ratings, review counts, and keyword positions from the data above.`,
 
     keywords:`You are an ASO keyword strategy expert. Analyze keyword performance and identify opportunities.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Current Performance** — how is [YOUR APP] doing on tracked keywords?\n2. **Gap Opportunities** — keywords where competitors rank top 10 but your app doesn't\n3. **Long-tail Targets** — 10–15 specific long-tail phrases likely to convert with lower competition\n4. **Priority Keywords** — ranked list of keywords to add to metadata immediately (with rationale)\n5. **Keywords to Drop** — any tracked keywords that are too competitive or irrelevant\n\nFormat keyword suggestions as a clear list, one per line.`,
