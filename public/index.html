@@ -181,6 +181,37 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .llm-tab:hover{color:var(--text)}
 .llm-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .llm-tab .dot{color:var(--success);margin-left:5px;font-size:10px}
+#sess-dlg{border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);padding:20px 22px;width:min(520px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.3)}
+#sess-dlg::backdrop{background:rgba(0,0,0,.45)}
+#sess-dlg h3{font-family:'Outfit',sans-serif;margin:0 0 14px;font-size:17px}
+.sess-row{display:flex;gap:8px;margin-bottom:14px}
+.sess-row input{flex:1;font-family:'DM Sans',sans-serif;font-size:13.5px;padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);outline:none}
+.sess-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.sess-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:9px}
+.sess-item .sess-info{flex:1;min-width:0}
+.sess-n{display:block;font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-d{display:block;font-size:11.5px;color:var(--muted)}
+.sess-auto{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-2);margin-bottom:12px}
+.sess-foot{display:flex;justify-content:flex-end}
+.kw-tbl th.sortable{cursor:pointer;user-select:none}
+.kw-tbl th.sortable:hover{color:var(--accent)}
+.kw-tbl th .arr{margin-left:3px;font-size:10px;color:var(--accent)}
+.kw-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:8px}
+.kw-filters .fg{display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap}
+.kw-filters .fg-l{margin-right:2px}
+.kw-filters .fchip{font-family:'DM Sans',sans-serif;font-size:12px;padding:3px 10px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;transition:all .15s;user-select:none}
+.kw-filters .fchip:hover{border-color:var(--accent)}
+.kw-filters .fchip.on{border-color:var(--accent);background:var(--accent-mid);color:var(--accent);font-weight:600}
+.kw-filters button{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;padding:0}
+.kw-row-refresh{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 0 0 6px;opacity:.45;transition:opacity .15s,color .15s}
+.kw-row-refresh:hover{opacity:1;color:var(--accent)}
+.kw-row-refresh .ri{display:inline-block;width:1em;height:1em;line-height:1;text-align:center;transform-origin:50% 50%}
+.kw-row-refresh.spin{opacity:1;color:var(--accent);cursor:default}
+.kw-row-refresh.spin .ri{animation:kwspin .8s linear infinite}
+tr.kw-busy td{opacity:.55}
+@keyframes kwspin{to{transform:rotate(360deg)}}
+@keyframes kwp{0%,100%{opacity:.25}50%{opacity:.8}}
+.kw-loading{animation:kwp 1.1s ease-in-out infinite}
 .llm-empty{color:var(--muted);font-size:13.5px}
 .kw-cache-note{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin-bottom:8px}
 .kw-cache-note button{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;padding:0}
@@ -388,13 +419,18 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
     </div>
 
     <div class="bar">
-      <div class="bar-left"></div>
+      <div class="bar-left">
+        <button class="llm-btn secondary" onclick="openSessionDialog('save')" title="Save apps, keywords, results and AI output to a file">💾 Save session</button>
+        <button class="llm-btn secondary" onclick="openSessionDialog('load')" title="Restore a saved session">📂 Load session</button>
+      </div>
       <button class="go-btn" id="go-btn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Analyze Apps
       </button>
     </div>
   </div>
+
+  <dialog id="sess-dlg"></dialog>
 
   <div id="loader" style="display:none">
     <div class="ld-wrap">
@@ -457,6 +493,7 @@ table.coverage-tbl{width:100%;border-collapse:collapse;font-size:12.5px;font-var
       <div class="kw-add-row">
         <input id="kw-add-input" class="kw-add-input" type="text" placeholder="Add keyword…" spellcheck="false">
         <button class="ex-btn" onclick="addCustomKeyword()">Add</button>
+        <button class="llm-btn secondary" id="kw-ai-btn" style="display:none" onclick="suggestKeywordsWithAI()" title="Uses your connected local AI to suggest app keywords and long-tail phrases, then adds them to this list">✨ Suggest with AI</button>
         <button class="kw-run-btn" id="kw-run-btn" onclick="analyzeKeywords()">Analyze Keywords ▶</button>
       </div>
       <div class="soc-bar" id="soc-bar"></div>
@@ -785,12 +822,12 @@ async function cachedBatch(type, keywords, force, fetcher, valid) {
   }
   return out;
 }
-function renderCacheNote() {
+function renderCacheNote(msg) {
   const el=document.getElementById('kw-cache-note'); if(!el) return;
   const total=kwStats.hit+kwStats.miss;
   const ago=ms=>ms<90e3?'just now':ms<5400e3?Math.round(ms/60e3)+' min ago':Math.round(ms/3600e3)+' h ago';
   const txt=kwStats.hit===0?'Fetched live data':`⚡ ${kwStats.hit} of ${total} lookups served from cache (oldest ${ago(Date.now()-kwStats.oldest)})`;
-  el.innerHTML=`<span>${txt}</span><button onclick="analyzeKeywords(true)" title="Ignore the cache and re-fetch rankings, volume, trends and social metrics">↻ Refresh live data</button><button onclick="clearKwCache()">Clear cache</button>`;
+  el.innerHTML=`<span>${msg||txt}</span><button onclick="analyzeKeywords(true)" title="Ignore the cache and re-fetch rankings, volume, trends and social metrics">↻ Refresh live data</button><button onclick="clearKwCache()">Clear cache</button>`;
 }
 
 async function fetchKeywordRanking(keyword, apps, force=false) {
@@ -1075,13 +1112,17 @@ document.getElementById('kw-add-input')?.addEventListener('keydown',e=>{if(e.key
 // ── Keyword volume: ASA → autocomplete fallback ──
 async function fetchASAVolume(keywords, adamId) {
   try {
-    const qs=new URLSearchParams({keywords:keywords.join(',')});
-    if(adamId) qs.set('adamId',adamId);
-    const r=await fetch(`/api/asa/volume?${qs}`);
-    if(!r.ok) return {};
-    const data=await r.json();
-    if(!Array.isArray(data?.data)) return {};
-    return Object.fromEntries(data.data.map(d=>[d.keyword?.toLowerCase(),d.searchPopularityValue]));
+    const out={};
+    for(let i=0;i<keywords.length;i+=25){            // server accepts max 25 keywords per call
+      const qs=new URLSearchParams({keywords:keywords.slice(i,i+25).join(',')});
+      if(adamId) qs.set('adamId',adamId);
+      const r=await fetch(`/api/asa/volume?${qs}`);
+      if(!r.ok) return out;
+      const data=await r.json();
+      if(!Array.isArray(data?.data)) return out;
+      for(const d of data.data) out[d.keyword?.toLowerCase()]=d.searchPopularityValue;
+    }
+    return out;
   } catch(e) { console.warn('ASA volume failed',e); return {}; }
 }
 
@@ -1126,13 +1167,18 @@ async function fetchKeywordVolume(keywords, apps, force=false) {
 }
 
 // ── Keyword trend: Google Trends (web + YouTube) via /api/trends ──
-async function fetchKeywordTrends(keywords, force=false) {
-  return cachedBatch('trend',keywords,force,async miss=>{
-    try {
-      const r=await withTimeout(fetch(`/api/trends?keywords=${encodeURIComponent(miss.join(','))}&geo=${COUNTRY}${force?'&fresh=1':''}`),20000*miss.length+10000);
-      return r.ok?await r.json():{};
-    } catch(e) { console.warn('Trend fetch failed',e); return {}; }
-  },v=>Object.values(v||{}).some(x=>x.series?.length));
+async function fetchTrendOne(kw, force=false) {
+  const k=kw.toLowerCase(), cached=cacheGet('trend',k,force);
+  if(cached) return cached;
+  let data;
+  try {
+    const r=await withTimeout(fetch(`/api/trends?keywords=${encodeURIComponent(kw)}&geo=${COUNTRY}${force?'&fresh=1':''}`),60000);
+    if(!r.ok) throw new Error(`server returned HTTP ${r.status}`);
+    data=(await r.json())[k];
+  } catch(e) { return {request:{label:'Trends request',error:e.message}}; }
+  if(!data||!Object.keys(data).length) return {request:{label:'Trends request',error:'empty response'}};
+  if(Object.values(data).some(x=>x.series?.length)) cacheSet('trend',k,data);   // never cache failures
+  return data;
 }
 
 // Combine sources into one series (mean across sources) + % change of last 8 wks vs prior 8 wks
@@ -1145,18 +1191,23 @@ function summarizeTrend(sources) {
   const recent=avg(series.slice(-8)), prior=avg(series.slice(-16,-8));
   const change=prior>0?(recent-prior)/prior*100:(recent>0?100:0);
   const per=list.map(s=>{const a=s.series.slice(-8),b=s.series.slice(-16,-8);const p=avg(b);return `${s.label}: ${Math.round(avg(a))}/100 (${p>0?((avg(a)-p)/p*100>=0?'+':'')+Math.round((avg(a)-p)/p*100)+'%':'n/a'})`;});
-  return {series,change,recent,per,failed:Object.values(sources).filter(s=>s.error).map(s=>s.label)};
+  return {series,change,recent,per,failed:Object.values(sources).filter(s=>s.error).map(s=>`${s.label} (${s.error})`)};
 }
 function trendCell(sources) {
   const t=summarizeTrend(sources);
-  if(!t) return `<td class="kw-rank-cell center"><span class="null-val">—</span></td>`;
+  if(!t) {
+    const errs=Object.values(sources||{}).filter(x=>x.error);
+    if(!errs.length) return `<td class="kw-rank-cell center"><span class="null-val">—</span></td>`;
+    const msg=/429/.test(errs[0].error)?'rate-limited (429)':errs[0].error, short=msg.length>26?msg.slice(0,25)+'…':msg;
+    return `<td class="kw-rank-cell center" title="${esc(errs.map(e=>`${e.label}: ${e.error}`).join('\n'))}"><span style="font-size:11px;font-weight:600;color:var(--danger)">⚠ ${esc(short)}</span><span style="display:block;font-size:10px;color:var(--muted)">trend unavailable</span></td>`;
+  }
   const W=70,H=22,max=Math.max(...t.series,1);
   const pts=t.series.map((v,i)=>`${(i/(t.series.length-1)*W).toFixed(1)},${(H-1-v/max*(H-2)).toFixed(1)}`).join(' ');
   const up=t.change>=5, down=t.change<=-5;
   const color=up?'var(--success)':down?'#ef4444':'var(--muted)';
   const arrow=up?'▲':down?'▼':'■';
   const tip=`12-month search interest (0–100), last 8 wks vs prior 8 wks\n${t.per.join('\n')}${t.failed.length?'\nUnavailable: '+t.failed.join(', '):''}`;
-  return `<td class="kw-rank-cell center trend-cell" title="${esc(tip)}"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg><span style="font-size:10px;font-weight:700;color:${color}">${arrow} ${t.change>=0?'+':''}${Math.round(t.change)}%</span></td>`;
+  return `<td class="kw-rank-cell center trend-cell" title="${esc(tip)}"><svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg><span style="font-size:10px;font-weight:700;color:${color}">${arrow} ${t.change>=0?'+':''}${Math.round(t.change)}%${t.failed.length?' ⚠':''}</span></td>`;
 }
 
 // ── Social accounts: log in via a real Chrome window (server-side), then pull hashtag metrics ──
@@ -1202,22 +1253,23 @@ async function fetchSocialMetrics(keywords, force=false) {
   if(miss.length){
     try {
       const r=await withTimeout(fetch(`/api/social/metrics?keywords=${encodeURIComponent(miss.join(','))}${force?'&fresh=1':''}`),60000*miss.length+30000);
-      const data=r.ok?await r.json():{};
+      if(!r.ok) throw new Error(`server returned HTTP ${r.status}`);
+      const data=await r.json();
       for(const [k,m] of Object.entries(data)){
         out[k]=m;
         const good=Object.fromEntries(Object.entries(m).filter(([,d])=>!d.error));
         if(Object.keys(good).length) cacheSet('social',k,good);
       }
       loadSocialStatus();                       // a session may have expired
-    } catch(e) { console.warn('Social metrics failed',e); }
+    } catch(e) { console.warn('Social metrics failed',e); for(const k of miss) out[k.toLowerCase()]={_request:{error:e.message}}; }
   }
   return out;
 }
 const fmtBig=n=>n==null?'?':n>=1e9?(n/1e9).toFixed(1)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(n);
 function socialCell(m) {
   const lines=Object.entries(m||{}).map(([id,d])=>{
-    const ic=SOC_ICON[id];
-    if(d.error) return `<span class="soc-metric" style="color:var(--muted)" title="${esc(d.error)}">${ic} —</span>`;
+    const ic=SOC_ICON[id]||'';
+    if(d.error) return `<span class="soc-metric" style="color:var(--danger)" title="${esc(d.error)}">${ic} ⚠ ${id==='_request'?'error':'failed'}</span>`;
     if(id==='tiktok') return `<span class="soc-metric" title="TikTok #hashtag: ${fmtBig(d.posts)} videos">${ic} ${fmtBig(d.views)} views</span>`;
     if(id==='instagram') return `<span class="soc-metric" title="Instagram #hashtag total posts">${ic} ${fmtBig(d.posts)} posts</span>`;
     return `<span class="soc-metric" title="Estimated from the ${d.sample} most recent matching posts">${ic} ~${d.postsPerHour}/h</span>`;
@@ -1225,30 +1277,66 @@ function socialCell(m) {
   return `<td class="kw-rank-cell center">${lines.join('')||'<span class="null-val">—</span>'}</td>`;
 }
 
+const chunksOf=(a,n)=>Array.from({length:Math.ceil(a.length/n)},(_,i)=>a.slice(i*n,i*n+n));
+function limiter(n) {
+  let active=0; const queue=[];
+  const next=()=>{ active--; queue.shift()?.(); };
+  return fn=>new Promise((res,rej)=>{ const run=()=>{ active++; fn().then(res,rej).finally(next); }; active<n?run():queue.push(run); });
+}
+
+// Keywords are analyzed in order; each row appears as soon as that keyword is fully done.
+// Slow lookups (rankings, volume, social) are prefetched in the background while trends (strictly sequential) run.
 async function analyzeKeywords(force) {
   force=force===true;
   kwStats={hit:0,miss:0,oldest:Date.now()};
   if(!lastApps){alert('Run an analysis first.');return;}
   const selected=[...document.querySelectorAll('#kw-chips .kw-chip.on')].map(c=>c.dataset.kw);
   if(!selected.length){alert('Select at least one keyword.');return;}
-  const btn=document.getElementById('kw-run-btn'); btn.disabled=true; btn.textContent='Analyzing…';
-  const kwSec=document.getElementById('kw-results-section');
-  document.getElementById('kw-cards').innerHTML=`<p style="color:var(--muted);font-size:13px;padding:10px 0">Checking ${selected.length} keyword${selected.length>1?'s':''}…</p>`;
-  kwSec.style.display='block';
-  const [kwResults,volData,trendData,socData]=await Promise.all([
-    Promise.all(selected.map(kw=>fetchKeywordRanking(kw,lastApps,force))),
-    fetchKeywordVolume(selected,lastApps,force),
-    fetchKeywordTrends(selected,force),
-    fetchSocialMetrics(selected,force),
-  ]);
-  lastKwResults=kwResults;
-  lastKwMeta={volData,trendData,socData};
+  const btn=document.getElementById('kw-run-btn'); btn.disabled=true;
+  const kl=k=>k.toLowerCase(), apps=lastApps, total=selected.length;
+  const flags=kwTableFlags(apps,Object.values(socStatus).some(x=>x.connected));
+  const state={};
+  const ui=createKeywordTable(apps,selected,flags,state);
+  lastKwResults=null;
+  const note=document.getElementById('kw-cache-note');
+  const progress=n=>{ btn.textContent=`Analyzing… ${n}/${total}`; note.textContent=`Analyzing — each keyword appears as it finishes (${n}/${total} done)`; };
+  progress(0);
+  document.getElementById('kw-results-section').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // background prefetch
+  const lim=limiter(4), rankP={}, volP={}, socP={};
+  selected.forEach(k=>{
+    rankP[kl(k)]=lim(()=>fetchKeywordRanking(k,apps,force)).catch(()=>({keyword:k,ranks:apps.map(()=>({pos:null,error:true})),iosTop:[],androidTop:[],iosTotalResults:0}));
+  });
+  for(const chunk of chunksOf(selected,5)){
+    const vp=fetchKeywordVolume(chunk,apps,force).catch(()=>null);
+    chunk.forEach(k=>{ volP[kl(k)]=vp.then(v=>({vol:v?.iosMap?.[kl(k)]??null,src:v?.iosSource||null})); });
+  }
+  if(flags.hasSoc){            // first keyword alone so its row isn't held up, then batches of 5 (one headless Chrome per platform per call)
+    let chain=Promise.resolve();
+    for(const chunk of [selected.slice(0,1),...chunksOf(selected.slice(1),5)]){
+      const sp=chain.then(()=>fetchSocialMetrics(chunk,force)).catch(()=>({}));
+      chain=sp;
+      chunk.forEach(k=>{ socP[kl(k)]=sp.then(m=>m[kl(k)]||null); });
+    }
+  }
+
+  let volSource=null, done=0;
+  for(const kw of selected){
+    const k=kl(kw);
+    const [rank,v,soc]=await Promise.all([rankP[k],volP[k],flags.hasSoc?socP[k]:null]);
+    const trend=await fetchTrendOne(kw,force);
+    if(v?.src){ volSource=v.src; ui.setVolSource(volSource); }
+    state[k]={keyword:kw,rank,vol:v?.vol??null,volSrc:volSource,trend,soc};
+    ui.update(k);
+    progress(++done);
+  }
+
+  kwTable.complete=true; syncKwFromTable();
   renderCacheNote();
-  renderKeywordCards(lastApps,kwResults,volData,trendData,socData);
-  renderKeywordGaps(lastApps,kwResults);
-  renderKeywordDensity(lastApps,kwResults);
+  renderKeywordGaps(apps,lastKwResults);
+  renderKeywordDensity(apps,lastKwResults);
   btn.disabled=false; btn.textContent='Analyze Keywords ▶';
-  kwSec.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function volDots(v,source) {
@@ -1276,31 +1364,47 @@ function diffCell(score) {
   return `<td class="kw-rank-cell center"><span style="font-size:11px;font-weight:700;color:${color}">${label}</span><span style="color:var(--muted);font-size:10px;display:block">${score}/100</span></td>`;
 }
 
-function renderKeywordCards(apps, kwResults, volData={}, trendData={}, socData={}) {
-  const {iosMap={},iosSource=null,androidMap={},androidSource=null}=volData;
-  const sec=document.getElementById('kw-results-section'), container=document.getElementById('kw-cards');
+function kwTableFlags(apps, hasSoc) {
+  return {hasIOS:apps.some(a=>a.store==='ios'), hasVol:apps.some(a=>a.store==='ios'&&a.trackId), hasAndroid:apps.some(a=>a.store==='android'), hasSoc};
+}
+
+// Filter / sort settings for the results table (kept between analyses)
+const KW_VIEW_DEFAULT=()=>({sort:null,dir:'desc',vol:[],trend:[],diff:[]});
+let kwView=(()=>{ try { const j=JSON.parse(localStorage.getItem('aso-kw-view')||'{}'); const d=KW_VIEW_DEFAULT(); return {sort:j.sort??null,dir:j.dir||'desc',vol:Array.isArray(j.vol)?j.vol:d.vol,trend:Array.isArray(j.trend)?j.trend:d.trend,diff:Array.isArray(j.diff)?j.diff:d.diff}; } catch(_) { return KW_VIEW_DEFAULT(); } })();
+// Toggle chips: lit chips in a group are OR-ed, groups are AND-ed, no lit chip = no filter on that column
+const KW_FILTERS={
+  vol:[[1,'Very Low'],[2,'Low'],[3,'Medium'],[4,'High'],[5,'Very High']],
+  trend:[['up','▲ Rising'],['flat','■ Flat'],['down','▼ Falling']],
+  diff:[['easy','Easy'],['medium','Medium'],['hard','Hard'],['vhard','Very Hard']],
+};
+const diffBand=d=>d<=25?'easy':d<=50?'medium':d<=75?'hard':'vhard';
+const trendBand=t=>t>=5?'up':t<=-5?'down':'flat';
+const saveKwView=()=>{ try{localStorage.setItem('aso-kw-view',JSON.stringify(kwView));}catch(_){} };
+let kwTable=null;   // the table currently on screen: {ui,state,flags,apps,complete}
+
+// Builds the table; update(kw) adds a keyword's row the first time and re-renders it afterwards
+function createKeywordTable(apps, keywords, flags, state, onUpdate) {
+  const container=document.getElementById('kw-cards');
   container.innerHTML='';
-  const hasIOS=apps.some(a=>a.store==='ios'), hasAndroid=apps.some(a=>a.store==='android');
-  const hasIosVol=hasIOS&&Object.keys(iosMap).length>0;
-  const hasAndVol=hasAndroid&&Object.keys(androidMap).length>0;
-  const hasSoc=Object.values(socData).some(m=>Object.keys(m).length);
+  const {hasIOS,hasVol,hasAndroid,hasSoc}=flags;
   const trackedIos=new Set(apps.filter(a=>a.store==='ios'&&a.trackId).map(a=>a.trackId));
   const trackedAnd=new Set(apps.filter(a=>a.store==='android'&&a.packageId).map(a=>a.packageId));
 
+  // filter bar
+  const bar=document.createElement('div'); bar.className='kw-filters';
+  const grp=(key,label)=>`<span class="fg"><span class="fg-l">${label}</span>${KW_FILTERS[key].map(([v,t])=>`<button type="button" class="fchip${kwView[key].includes(v)?' on':''}" data-g="${key}" data-v="${v}">${t}</button>`).join('')}</span>`;
+  bar.innerHTML='<span>Filter:</span>'+(hasVol?grp('vol','Volume'):'')+grp('trend','Trend')+(hasIOS?grp('diff','Difficulty'):'')+'<button id="kwf-reset">Reset</button><span id="kwf-count"></span>';
+  container.appendChild(bar);
+
   const wrap=document.createElement('div'); wrap.className='kw-tbl-wrap';
   const tbl=document.createElement('table'); tbl.className='kw-tbl';
+  const th=(key,label,tip,id)=>`<th class="center sortable" data-sort="${key}"${id?` id="${id}"`:''} title="${tip} · click to sort"><span class="lbl">${label}</span><span class="arr"></span></th>`;
 
-  // Header
   let headCols='<th>Keyword</th>';
-  if(hasIosVol){
-    const lbl=iosSource==='asa'?'Vol 🍎':'Vol 🍎~';
-    const tip=iosSource==='asa'?'Apple Search Ads popularity (1–5)':'App Store autocomplete estimate (1–5)';
-    headCols+=`<th class="center" title="${tip}">${lbl}</th>`;
-  }
-  if(hasAndVol) headCols+=`<th class="center" title="Play Store autocomplete estimate (1–5)">Vol 🤖~</th>`;
-  headCols+='<th class="center" title="Google Search + YouTube search interest over the last 12 months (Google Trends), with change of last 8 weeks vs the prior 8">Trend</th>';
+  if(hasVol) headCols+=th('vol','Vol 🍎','App Store popularity estimate (1–5)','kw-vol-th');
+  headCols+=th('trend','Trend','Google Search + YouTube search interest over the last 12 months (Google Trends), with change of last 8 weeks vs the prior 8');
   if(hasSoc) headCols+='<th class="center" title="Hashtag totals from your logged-in TikTok / Instagram sessions; X shows estimated posts per hour">Social</th>';
-  if(hasIOS) headCols+='<th class="center" title="Computed from top-10 avg review count, rating, and result count. Higher = harder to rank.">Difficulty</th>';
+  if(hasIOS) headCols+=th('diff','Difficulty','Computed from top-10 avg review count, rating, and result count. Higher = harder to rank.');
   apps.forEach(a=>{ headCols+=`<th class="center">${esc(a.name.length>12?a.name.slice(0,10)+'…':a.name)} ${a.store==='ios'?'🍎':'🤖'}</th>`; });
   if(hasIOS) headCols+='<th>Top 🍎 Apps</th>';
   if(hasAndroid) headCols+='<th>Top 🤖 Apps</th>';
@@ -1311,43 +1415,144 @@ function renderKeywordCards(apps, kwResults, volData={}, trendData={}, socData={
     const isMine=isIos?trackedIos.has(a.trackId):trackedAnd.has(a.packageId);
     const name=isIos?a.name:(a.name||a.packageId);
     const link=isIos?`https://apps.apple.com/app/id${a.trackId}`:`https://play.google.com/store/apps/details?id=${a.packageId}`;
-    const pos=a.pos;
-    const title=`${pos ? '#'+pos+' ' : ''}${name}`;
-    const ph=isIos?'🍎':'🤖';
+    const title=`${a.pos ? '#'+a.pos+' ' : ''}${name}`;
     const iconEl=a.icon
       ?`<img class="kw-ico-img" src="${esc(a.icon)}" alt="${esc(name)}" loading="lazy" onerror="this.style.display='none'">`
-      :`<div class="kw-ico-ph">${ph}</div>`;
+      :`<div class="kw-ico-ph">${isIos?'🍎':'🤖'}</div>`;
     return `<a class="kw-ico-link${isMine?' mine':''}" href="${esc(link)}" target="_blank" rel="noopener" title="${esc(title)}">${iconEl}</a>`;
   }).join('');
 
-  for (const {keyword,ranks,iosTop,androidTop,iosTotalResults} of kwResults) {
-    const tr=document.createElement('tr');
-    let cells=`<td class="kw-kw">${esc(keyword)}</td>`;
-    if(hasIosVol){
-      const vol=iosMap[keyword.toLowerCase()];
-      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,iosSource):'<span class="null-val">—</span>'}</td>`;
-    }
-    if(hasAndVol){
-      const vol=androidMap[keyword.toLowerCase()];
-      cells+=`<td class="kw-rank-cell center">${vol!=null?volDots(vol,androidSource):'<span class="null-val">—</span>'}</td>`;
-    }
-    cells+=trendCell(trendData[keyword.toLowerCase()]);
-    if(hasSoc) cells+=socialCell(socData[keyword.toLowerCase()]);
-    if(hasIOS) cells+=diffCell(computeDifficulty(iosTop,iosTotalResults));
+  const LOAD='<td class="kw-rank-cell center"><span class="null-val kw-loading">…</span></td>';
+  const NONE='<td class="kw-rank-cell center"><span class="null-val">—</span></td>';
+  const rows={}, keys=[];
+  const cellsFor=s=>{
+    const rank=s.rank;
+    let c=`<td class="kw-kw">${esc(s.keyword)}<button class="kw-row-refresh" data-kw="${esc(s.keyword.toLowerCase())}" title="Re-fetch this keyword (ignores the cache)"><span class="ri">↻</span></button></td>`;
+    if(hasVol) c+=s.vol===undefined?LOAD:s.vol!=null?`<td class="kw-rank-cell center">${volDots(s.vol,s.volSrc||'autocomplete')}</td>`:NONE;
+    c+=s.trend===undefined?LOAD:s.trend===null?NONE:trendCell(s.trend);
+    if(hasSoc) c+=s.soc===undefined?LOAD:s.soc===null?NONE:socialCell(s.soc);
+    if(hasIOS) c+=rank?diffCell(computeDifficulty(rank.iosTop,rank.iosTotalResults)):LOAD;
     apps.forEach((_,i)=>{
-      const r=ranks[i];
-      if(!r||r.error){cells+='<td class="kw-rank-cell"><span class="null-val">err</span></td>';return;}
+      if(!rank){c+=LOAD;return;}
+      const r=rank.ranks[i];
+      if(!r||r.error){c+='<td class="kw-rank-cell"><span class="null-val" style="color:var(--danger)" title="Search request failed">err</span></td>';return;}
       const pos=r.pos, cls=pos==null?'low':pos<=3?'top3':pos<=10?'top10':pos<=50?'top50':'low';
-      cells+=`<td class="kw-rank-cell">${pos!=null?`<span class="kw-rank ${cls}">#${pos}</span>`:`<span class="null-val">—</span>`}</td>`;
+      c+=`<td class="kw-rank-cell">${pos!=null?`<span class="kw-rank ${cls}">#${pos}</span>`:`<span class="null-val">—</span>`}</td>`;
     });
-    if(hasIOS) cells+=`<td><div class="kw-icons">${makeIcons(iosTop||[],true)}</div></td>`;
-    if(hasAndroid) cells+=`<td><div class="kw-icons">${makeIcons(androidTop||[],false)}</div></td>`;
-    tr.innerHTML=cells;
-    tbody.appendChild(tr);
-  }
+    if(hasIOS) c+=`<td><div class="kw-icons">${rank?makeIcons(rank.iosTop||[],true):''}</div></td>`;
+    if(hasAndroid) c+=`<td><div class="kw-icons">${rank?makeIcons(rank.androidTop||[],false):''}</div></td>`;
+    return c;
+  };
+
+  // ── sorting + filtering (null values always sort last; filters hide rows whose value is unknown) ──
+  const metric={
+    vol:s=>s.vol??null,
+    trend:s=>summarizeTrend(s.trend)?.change??null,
+    diff:s=>s.rank?computeDifficulty(s.rank.iosTop,s.rank.iosTotalResults):null,
+  };
+  const passes=s=>{
+    if(kwView.vol.length){ const v=metric.vol(s); if(v==null||!kwView.vol.includes(Math.min(5,Math.max(1,Math.round(v))))) return false; }
+    if(kwView.trend.length){ const t=metric.trend(s); if(t==null||!kwView.trend.includes(trendBand(t))) return false; }
+    if(kwView.diff.length){ const d=metric.diff(s); if(d==null||!kwView.diff.includes(diffBand(d))) return false; }
+    return true;
+  };
+  const applyView=()=>{
+    let order=keys.slice();
+    if(kwView.sort&&metric[kwView.sort]){
+      const f=metric[kwView.sort], m=kwView.dir==='asc'?1:-1;
+      order=keys.map((k,i)=>({k,i,v:f(state[k])})).sort((a,b)=>(a.v==null)-(b.v==null)||(a.v==null?0:(a.v-b.v)*m)||a.i-b.i).map(x=>x.k);
+    }
+    let shown=0;
+    for(const k of order){ tbody.appendChild(rows[k]); const ok=passes(state[k]); rows[k].style.display=ok?'':'none'; if(ok) shown++; }
+    tbl.querySelectorAll('th.sortable').forEach(h=>{ h.querySelector('.arr').textContent=kwView.sort===h.dataset.sort?(kwView.dir==='asc'?'▲':'▼'):''; });
+    const filtered=kwView.vol.length||kwView.trend.length||kwView.diff.length;
+    bar.querySelector('#kwf-count').textContent=keys.length?(filtered?`Showing ${shown} of ${keys.length}`:`${keys.length} keyword${keys.length!==1?'s':''}`):'';
+  };
+  bar.addEventListener('click',e=>{
+    const c=e.target.closest('.fchip');
+    if(c){
+      const g=c.dataset.g, v=g==='vol'?+c.dataset.v:c.dataset.v, arr=kwView[g], i=arr.indexOf(v);
+      if(i>=0) arr.splice(i,1); else arr.push(v);
+      c.classList.toggle('on',i<0);
+      saveKwView(); applyView(); return;
+    }
+    if(e.target.id==='kwf-reset'){
+      Object.assign(kwView,KW_VIEW_DEFAULT());
+      bar.querySelectorAll('.fchip.on').forEach(x=>x.classList.remove('on'));
+      saveKwView(); applyView();
+    }
+  });
+  tbl.querySelector('thead').addEventListener('click',e=>{
+    const h=e.target.closest('th.sortable'); if(!h) return;
+    const k=h.dataset.sort;                                     // desc → asc → original order
+    if(kwView.sort!==k){ kwView.sort=k; kwView.dir='desc'; } else if(kwView.dir==='desc') kwView.dir='asc'; else kwView.sort=null;
+    saveKwView(); applyView();
+  });
+  tbody.addEventListener('click',e=>{
+    const b=e.target.closest('.kw-row-refresh'); if(b&&!b.classList.contains('spin')) refreshKeywordRow(b.dataset.kw);
+  });
 
   tbl.appendChild(tbody); wrap.appendChild(tbl); container.appendChild(wrap);
-  sec.style.display='block';
+  document.getElementById('kw-results-section').style.display='block';
+  applyView();
+  const ui={
+    update(k){
+      let tr=rows[k]; if(!tr){ tr=document.createElement('tr'); rows[k]=tr; keys.push(k); tbody.appendChild(tr); }
+      tr.innerHTML=cellsFor(state[k]); applyView(); onUpdate&&onUpdate();
+    },
+    setBusy(k,on){ const tr=rows[k]; if(!tr) return; tr.classList.toggle('kw-busy',on); const b=tr.querySelector('.kw-row-refresh'); if(b) b.classList.toggle('spin',on); },
+    setVolSource(src){
+      const h=document.getElementById('kw-vol-th'); if(!h) return;
+      h.querySelector('.lbl').textContent=src==='asa'?'Vol 🍎':'Vol 🍎~';
+      h.title=(src==='asa'?'Apple Search Ads popularity (1–5)':'App Store autocomplete estimate (1–5)')+' · click to sort';
+      Object.values(state).forEach(x=>{ x.volSrc=src; });
+    },
+    keys:()=>keys.slice(),
+  };
+  kwTable={ui,state,flags,apps,complete:false,busy:{}};
+  return ui;
+}
+
+// Rebuild lastKwResults / lastKwMeta (used by export, AI prompts, session save) from the table's state
+function syncKwFromTable() {
+  const T=kwTable; if(!T) return;
+  const ks=T.ui.keys(), pick=f=>Object.fromEntries(ks.map(k=>[k,T.state[k][f]]).filter(([,v])=>v!=null));
+  lastKwResults=ks.map(k=>T.state[k].rank);
+  const src=ks.map(k=>T.state[k].volSrc).find(Boolean)||null;
+  lastKwMeta={volData:{iosMap:pick('vol'),iosSource:src,androidMap:{},androidSource:null},trendData:pick('trend'),socData:pick('soc')};
+}
+
+// ↻ on a row: re-fetch just that keyword, ignoring the cache
+async function refreshKeywordRow(k) {
+  const T=kwTable; if(!T||T.busy[k]||!T.state[k]) return;
+  const s=T.state[k], kw=s.keyword, apps=T.apps;
+  T.busy[k]=true; T.ui.setBusy(k,true);
+  try {
+    const [rank,v,trend,soc]=await Promise.all([
+      fetchKeywordRanking(kw,apps,true).catch(()=>({keyword:kw,ranks:apps.map(()=>({pos:null,error:true})),iosTop:[],androidTop:[],iosTotalResults:0})),
+      T.flags.hasVol?fetchKeywordVolume([kw],apps,true).catch(()=>null):null,
+      fetchTrendOne(kw,true),
+      T.flags.hasSoc?fetchSocialMetrics([kw],true).then(m=>m[k]||null).catch(()=>null):null,
+    ]);
+    Object.assign(s,{rank,vol:T.flags.hasVol?(v?.iosMap?.[k]??null):s.vol,volSrc:v?.iosSource||s.volSrc,trend,soc});
+    T.ui.update(k);
+    if(T.complete){ syncKwFromTable(); renderKeywordGaps(apps,lastKwResults); renderKeywordDensity(apps,lastKwResults); }
+    showToast(`Refreshed “${kw}”`,2000);
+  } catch(e) { showToast(`Refresh failed: ${e.message}`,4000); }
+  finally { T.busy[k]=false; T.ui.setBusy(k,false); }
+}
+
+// Static render from saved data (used when restoring a saved session)
+function renderKeywordCards(apps, kwResults, volData={}, trendData={}, socData={}) {
+  const {iosMap={},iosSource=null}=volData;
+  const flags=kwTableFlags(apps,Object.values(socData).some(m=>Object.keys(m).length));
+  flags.hasVol=flags.hasVol&&Object.keys(iosMap).length>0;
+  const state={};
+  for(const r of kwResults){ const k=r.keyword.toLowerCase(); state[k]={keyword:r.keyword,rank:r,vol:iosMap[k]??null,volSrc:iosSource,trend:trendData[k]??null,soc:socData[k]??null}; }
+  const ui=createKeywordTable(apps,kwResults.map(r=>r.keyword),flags,state);
+  ui.setVolSource(iosSource);
+  kwResults.forEach(r=>ui.update(r.keyword.toLowerCase()));
+  kwTable.complete=true;
 }
 
 // ── App picker ──
@@ -2240,6 +2445,7 @@ async function connectLLM() {
     const models=data.data||[];
     if(!models.length) throw new Error('No models loaded in LM Studio');
     document.getElementById('llm-model-sel').innerHTML=models.map(m=>`<option value="${esc(m.id)}">${esc(m.id)}</option>`).join('');
+    if(window.pendingLLMModel&&models.some(m=>m.id===window.pendingLLMModel)) document.getElementById('llm-model-sel').value=window.pendingLLMModel;
     modelRow.style.display='flex'; showLLMTabs(true);
     statusEl.className='llm-status ok'; statusEl.textContent=`✓ Connected — ${models.length} model${models.length!==1?'s':''} available`;
   } catch(e) {
@@ -2267,6 +2473,7 @@ function renderLLMTabs() {
 }
 function selectLLMTab(mode) { llmMode=mode; renderLLMTabs(); }
 function showLLMTabs(on) {
+  const kwAi=document.getElementById('kw-ai-btn'); if(kwAi) kwAi.style.display=on?'':'none';
   document.getElementById('llm-tabs').style.display=on?'flex':'none';
   document.getElementById('llm-output-wrap').style.display=on?'block':'none';
   if(on) renderLLMTabs();
@@ -2288,6 +2495,59 @@ async function analyzeWithLLM() {
   await streamLLM(url,model,buildLLMPrompt(mode),outputEl,text=>{
     llmBusy[mode]=false; if(text) llmDone[mode]=true; renderLLMTabs();
   });
+}
+
+// ── AI keyword suggestions for the "Keywords to Analyze" list (brand/app names filtered out) ──
+function brandTerms(app) {
+  const clean=x=>(x||'').toLowerCase().replace(/\b(inc|llc|ltd|gmbh|corp|co|limited|studio|studios|games|apps)\b\.?/g,' ').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+  const main=clean((app.name||'').split(/[:\-–—|]/)[0]);
+  const terms=new Set([clean(app.name)]); if(main.length>=3) terms.add(main);
+  const dev=clean(app.dev); if(dev.length>=4) terms.add(dev);
+  return [...terms].filter(Boolean);
+}
+function isBrandKeyword(kw, terms) {
+  const k=kw.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+  return terms.some(t=>k===t||(` ${k} `).includes(` ${t} `));
+}
+let kwAiRunning=false, kwAiStop=false;
+async function suggestKeywordsWithAI() {
+  if(kwAiRunning){ kwAiStop=true; document.getElementById('kw-ai-btn').textContent='Stopping after this app…'; return; }
+  if(!lastApps){alert('Run an analysis first.');return;}
+  const model=document.getElementById('llm-model-sel').value;
+  if(!model){alert('Connect to your local AI first (scroll to AI Analysis).');return;}
+  const url=document.getElementById('llm-url').value.trim().replace(/\/$/,'');
+  const btn=document.getElementById('kw-ai-btn'), label=btn.textContent;
+  const box=document.getElementById('kw-chips');
+  const have=new Set([...box.querySelectorAll('.kw-chip')].map(c=>c.dataset.kw));
+  const terms=lastApps.flatMap(brandTerms);
+  const todo=lastApps.map((a,i)=>i).filter(i=>!lastApps[i].error);
+  let added=0, dropped=0, failed=0, done=0;
+  kwAiRunning=true; kwAiStop=false;
+  for(const i of todo){
+    if(kwAiStop) break;
+    const app=lastApps[i];
+    btn.textContent=`⏹ Stop · ${done+1}/${todo.length} ${app.name.length>16?app.name.slice(0,15)+'…':app.name}`;
+    const sink=document.createElement('div'); let text='';
+    // each request covers one app and sees everything added so far, so nothing is repeated
+    await streamLLM(url,model,buildLLMPrompt('kwsuggest',false,[...have],i),sink,t=>{text=t;});
+    let data=null;
+    try { const m=text.match(/\{[\s\S]*\}/); data=m?JSON.parse(m[0]):null; } catch(_) {}
+    if(!data){ failed++; done++; continue; }
+    for(const [list,tag] of [[data.appKeywords,'app'],[data.longTail,'long-tail']]){
+      if(!Array.isArray(list)) continue;
+      for(const raw of list){
+        const kw=String(raw).trim().toLowerCase().replace(/\s+/g,' ');
+        if(!kw||have.has(kw)) continue;
+        if(isBrandKeyword(kw,terms)){dropped++;continue;}
+        have.add(kw);
+        const chip=makeChip(kw,true); chip.title=`AI ${tag==='long-tail'?'long-tail':'app'} suggestion · from ${app.name}`;
+        box.appendChild(chip); added++;
+      }
+    }
+    done++;
+  }
+  kwAiRunning=false; btn.textContent=label;
+  showToast(`Added ${added} AI keyword${added!==1?'s':''} from ${done-failed}/${todo.length} app${todo.length!==1?'s':''} (selected)${dropped?` · ${dropped} brand-name dropped`:''}${failed?` · ${failed} app${failed!==1?'s':''} failed (invalid reply)`:''}${kwAiStop?' · stopped early':''}`,6000);
 }
 
 // ── Export for other AI ──
@@ -2363,9 +2623,10 @@ function buildKeywordSection() {
   return t+'\n';
 }
 
-function buildLLMPrompt(mode='competitive', full=false) {
+function buildLLMPrompt(mode='competitive', full=false, tracked=[], appIdx=null) {
   let appData='';
   lastApps.forEach((a,i)=>{
+    if(appIdx!=null&&i!==appIdx) return;
     appData+=`### ${i===0?'[YOUR APP] ':''}${a.name}\n`;
     appData+=`- Store: ${a.store==='ios'?'App Store':'Google Play'}\n`;
     if(a.dev) appData+=`- Developer: ${a.dev}\n`;
@@ -2379,6 +2640,8 @@ function buildLLMPrompt(mode='competitive', full=false) {
   });
   const kwData=buildKeywordSection();
   const prompts={
+    kwsuggest:`You are an ASO keyword researcher. Suggest keywords to track for ONE app.\n\n## App${appIdx===0?' (the user\'s own app)':' (a competitor)'}\n\n${appData}Already tracked (do NOT repeat): ${tracked.slice(-80).join(', ')||'none'}\n\nProduce two lists:\n1. "appKeywords" — 10–12 short/mid-length (1–3 word) keywords this app targets, inferred from its category, features and description\n2. "longTail" — 8–10 long-tail phrases (3–6 words) users search that match what this app does\n\nRules:\n- NEVER include any app's own name, brand name or developer name (names to exclude: ${lastApps.map(a=>a.name).join('; ')})\n- Lowercase, no hashtags, no duplicates, nothing already tracked\n\nRespond with ONLY valid JSON, no markdown fences and no commentary, exactly:\n{"appKeywords": ["..."], "longTail": ["..."]}`,
+
     deep:`You are a senior ASO and mobile growth strategist. Perform a DEEP competitive analysis using ONLY the data below. Where data is missing or weak (e.g. volume is a proxy, not real search counts), say so rather than guessing.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Executive Summary** — the 5 most important findings and the single biggest opportunity\n2. **Competitive Landscape** — positioning of [YOUR APP] vs each competitor (ratings, review volume, languages, price, category, update cadence)\n3. **Keyword Opportunity Analysis** — use volume, difficulty, trend and social data: (a) high volume + low difficulty, (b) rising trends worth acting on early, (c) keywords where competitors rank top 10 and [YOUR APP] doesn't, (d) keywords to drop. Present as a ranked table with rationale\n4. **Metadata Recommendations** — title, subtitle, iOS keyword field (100 chars), short description, description opening; show character counts\n5. **Creative & Conversion** — screenshot, icon and preview-video recommendations based on competitor patterns\n6. **Localization** — top 5 markets/languages to add, with reasoning\n7. **30/60/90-Day Roadmap** — prioritized actions with expected impact and effort\n8. **Risks & Data Caveats** — what could invalidate these conclusions\n\nBe specific — cite actual numbers from the tables above.`,
 
     competitive:`You are an ASO (App Store Optimization) expert. Analyze the following competitive intelligence.\n\n## Apps\n\n${appData}${kwData}Provide:\n1. **Competitive Position** — how does [YOUR APP] compare overall?\n2. **Key Strengths** — concrete advantages your app has\n3. **Critical Gaps** — where competitors are winning and why\n4. **Quick Wins** — 3 specific changes to make immediately\n5. **Strategic Opportunities** — longer-term ASO plays based on this data\n\nBe specific — reference actual ratings, review counts, and keyword positions from the data above.`,
@@ -2397,6 +2660,128 @@ function buildLLMPrompt(mode='competitive', full=false) {
   };
   return prompts[mode]||prompts.competitive;
 }
+
+// ── Save / load session ──
+const SESS_META_IDS=['meta-title','meta-sub','meta-kw-field','meta-brand','meta-desc'];
+function sessReplacer(k,v){ return this[k] instanceof Date?{__date:this[k].toISOString()}:v; }
+function sessReviver(k,v){ return v&&typeof v==='object'&&v.__date?new Date(v.__date):v; }
+function pickerState(row) {
+  if(!row.dataset.appUrl) return null;
+  return {url:row.dataset.appUrl,name:row.querySelector('.picker-sel-name').textContent,
+    icon:row.querySelector('.picker-sel-icon').getAttribute('src')||'',
+    store:row.querySelector('.plat')?.classList.contains('android')?'android':'ios'};
+}
+function captureSession(name) {
+  const rows=[document.getElementById('your-row'),...document.querySelectorAll('#comp-list .comp-row')];
+  const cache={}; for(const r of rows){ const k=(r.dataset.appUrl||'').toLowerCase(); if(k&&appCache[k]) cache[k]=appCache[k]; }
+  const now=Date.now(), kc=kwCacheLoad();
+  return {
+    v:1, name, savedAt:new Date().toISOString(), country:COUNTRY,
+    yourApp:pickerState(rows[0]), competitors:rows.slice(1).map(pickerState).filter(Boolean),
+    appCache:cache, analyzed:!!lastApps,
+    chips:[...document.querySelectorAll('#kw-chips .kw-chip')].map(c=>({kw:c.dataset.kw,on:c.classList.contains('on')})),
+    kwResults:lastKwResults, kwMeta:lastKwMeta,
+    kwCache:Object.fromEntries(Object.entries(kc).filter(([k,e])=>now-e.t<(KW_TTL[k.split('|')[0]]||0))),
+    meta:Object.fromEntries(SESS_META_IDS.map(id=>[id,document.getElementById(id)?.value||''])),
+    llm:{url:document.getElementById('llm-url').value, model:document.getElementById('llm-model-sel').value, mode:llmMode,
+      results:Object.fromEntries(LLM_MODES.filter(([id])=>llmDone[id]).map(([id])=>[id,document.getElementById('llm-pane-'+id)?.textContent||'']))},
+  };
+}
+async function saveSession(name) {
+  const r=await fetch(`/api/sessions/${encodeURIComponent(name)}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(captureSession(name),sessReplacer)});
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  try{localStorage.setItem('aso-last-session',name);}catch(_){}
+}
+async function loadSession(name, opts={}) {
+  const r=await fetch(`/api/sessions/${encodeURIComponent(name)}`);
+  if(!r.ok){ if(!opts.quiet) showToast(`Session “${name}” not found`); return false; }
+  const sess=JSON.parse(await r.text(),sessReviver);
+  // 1. inputs
+  const yourRow=document.getElementById('your-row');
+  clearPicker(yourRow);
+  document.querySelectorAll('#comp-list .comp-row').forEach(x=>x.remove()); compCount=0;
+  if(sess.yourApp) selectApp(yourRow,sess.yourApp);
+  for(const c of sess.competitors||[]){ compCount++; const row=makeCompRow(compCount); document.getElementById('comp-list').appendChild(row); selectApp(row,c); }
+  updateAddBtn();
+  // 2. caches, so nothing is re-fetched
+  Object.assign(appCache,sess.appCache||{});
+  const kc=kwCacheLoad(); for(const [k,e] of Object.entries(sess.kwCache||{})) if(!kc[k]||kc[k].t<e.t) kc[k]=e; kwCacheSave();
+  // 3. analysis
+  if(sess.analyzed&&sess.yourApp){
+    await analyze();
+    if(sess.chips?.length){ const box=document.getElementById('kw-chips'); box.innerHTML=''; sess.chips.forEach(c=>box.appendChild(makeChip(c.kw,c.on))); }
+    if(sess.kwResults?.length&&lastApps){
+      lastKwResults=sess.kwResults; lastKwMeta=sess.kwMeta||{};
+      const {volData={},trendData={},socData={}}=lastKwMeta;
+      renderKeywordCards(lastApps,lastKwResults,volData,trendData,socData);
+      renderKeywordGaps(lastApps,lastKwResults); renderKeywordDensity(lastApps,lastKwResults);
+      document.getElementById('kw-results-section').style.display='block';
+      renderCacheNote(`Restored from saved session “${sess.name}” (${new Date(sess.savedAt).toLocaleString()})`);
+    }
+    if(SESS_META_IDS.some(id=>sess.meta?.[id])){ SESS_META_IDS.forEach(id=>{const el=document.getElementById(id); if(el) el.value=sess.meta[id]||'';}); updateMetaCharCounts(); }
+  }
+  // 4. local AI
+  if(sess.llm){
+    if(sess.llm.url) document.getElementById('llm-url').value=sess.llm.url;
+    window.pendingLLMModel=sess.llm.model;
+    const res=Object.entries(sess.llm.results||{});
+    for(const [id,text] of res){ llmPane(id).textContent=text; llmDone[id]=true; }
+    if(sess.llm.mode) llmMode=sess.llm.mode;
+    connectLLM().finally(()=>{     // read-only view of saved AI results if the local server isn't running
+      if(res.length&&document.getElementById('llm-tabs').style.display!=='flex'){
+        document.getElementById('llm-tabs').style.display='flex'; document.getElementById('llm-output-wrap').style.display='block'; renderLLMTabs();
+      }
+    });
+  }
+  try{localStorage.setItem('aso-last-session',sess.name||name);}catch(_){}
+  if(!opts.quiet) showToast(`Loaded session “${sess.name||name}”`);
+  return true;
+}
+async function renderSessionDialog(mode) {
+  const dlg=document.getElementById('sess-dlg');
+  let list=[]; try{ list=await (await fetch('/api/sessions')).json(); }catch(_){}
+  const last=(()=>{try{return localStorage.getItem('aso-last-session')||'';}catch(_){return '';}})();
+  const auto=(()=>{try{return localStorage.getItem('aso-autoload')!=='0';}catch(_){return true;}})();
+  const items=list.map(x=>`<div class="sess-item"><div class="sess-info"><span class="sess-n">${esc(x.name)}</span><span class="sess-d">${new Date(x.savedAt).toLocaleString()} · ${x.apps} app${x.apps!==1?'s':''} · ${x.keywords} keywords</span></div>
+    <button class="llm-btn ${mode==='load'?'primary':'secondary'}" data-act="${mode==='load'?'load':'use'}" data-name="${esc(x.name)}">${mode==='load'?'Load':'Overwrite'}</button>
+    <button class="llm-btn secondary" data-act="del" data-name="${esc(x.name)}" title="Delete">🗑</button></div>`).join('');
+  dlg.innerHTML=`<h3>${mode==='save'?'💾 Save session':'📂 Load session'}</h3>`+
+    (mode==='save'?`<div class="sess-row"><input id="sess-name" type="text" spellcheck="false" value="${esc(last||'session '+new Date().toISOString().slice(0,10))}"><button class="llm-btn primary" data-act="save">Save</button></div>`:'')+
+    `<div class="sess-list">${items||'<p class="llm-empty" style="margin:0">No saved sessions yet.</p>'}</div>
+    <label class="sess-auto"><input type="checkbox" id="sess-auto" ${auto?'checked':''}> Auto-load the last session when opening the app</label>
+    <div class="sess-foot"><button class="llm-btn secondary" data-act="close">Close</button></div>`;
+  dlg.dataset.mode=mode;
+}
+async function openSessionDialog(mode) {
+  const dlg=document.getElementById('sess-dlg');
+  await renderSessionDialog(mode);
+  if(!dlg.open) dlg.showModal();
+}
+document.getElementById('sess-dlg').addEventListener('click',async e=>{
+  const dlg=e.currentTarget, t=e.target.closest('[data-act]');
+  if(e.target===dlg){ dlg.close(); return; }
+  if(e.target.id==='sess-auto'){ try{localStorage.setItem('aso-autoload',e.target.checked?'1':'0');}catch(_){} return; }
+  if(!t) return;
+  const act=t.dataset.act, name=t.dataset.name;
+  try {
+    if(act==='close') dlg.close();
+    else if(act==='use') document.getElementById('sess-name').value=name;
+    else if(act==='save'){
+      const n=document.getElementById('sess-name').value.trim(); if(!n) return;
+      await saveSession(n); dlg.close(); showToast(`Session “${n}” saved`);
+    }
+    else if(act==='load'){ dlg.close(); await loadSession(name); }
+    else if(act==='del'){ if(!confirm(`Delete saved session “${name}”?`)) return; await fetch(`/api/sessions/${encodeURIComponent(name)}`,{method:'DELETE'}); await renderSessionDialog(dlg.dataset.mode); }
+  } catch(err) { showToast(`Session error: ${err.message}`,5000); }
+});
+// Re-open where you left off
+(async()=>{
+  try {
+    if(localStorage.getItem('aso-autoload')==='0') return;
+    const last=localStorage.getItem('aso-last-session');
+    if(last) await loadSession(last,{quiet:true});
+  } catch(e) { console.warn('Auto-load failed',e); }
+})();
 </script>
 </body>
 </html>

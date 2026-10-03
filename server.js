@@ -281,7 +281,7 @@ async function gtSeriesOnce(keyword, geo, property) {
 }
 
 app.get('/api/trends', async (req, res) => {
-  const keywords = (req.query.keywords || '').split(',').map(k => k.trim()).filter(Boolean).slice(0, 10);
+  const keywords = (req.query.keywords || '').split(',').map(k => k.trim()).filter(Boolean).slice(0, 50);
   const geo = (req.query.geo || 'US').toUpperCase().slice(0, 2);
   if (!keywords.length) return res.status(400).json({ error: 'no_keywords' });
 
@@ -415,7 +415,7 @@ const SOCIAL_SCRAPERS = {
 
 const socialCache = new Map();
 app.get('/api/social/metrics', async (req, res) => {
-  const keywords = (req.query.keywords || '').split(',').map(k => k.trim()).filter(Boolean).slice(0, 10);
+  const keywords = (req.query.keywords || '').split(',').map(k => k.trim()).filter(Boolean).slice(0, 30);
   const ids = Object.keys(SOCIAL).filter(id => socialConnected(id) && !socialPending[id]);
   const out = Object.fromEntries(keywords.map(k => [k.toLowerCase(), {}]));
   for (const id of ids) {
@@ -441,6 +441,39 @@ app.get('/api/social/metrics', async (req, res) => {
     } finally { await ctx.close().catch(() => {}); }
   }
   res.json(out);
+});
+
+// ── Saved sessions (inputs + analysis results), stored as JSON files in ./saved-sessions ──
+const SAVED_DIR = path.join(__dirname, 'saved-sessions');
+const sessionFile = name => path.join(SAVED_DIR, String(name).toLowerCase().replace(/[^a-z0-9._ -]/g, '_').trim().slice(0, 60) + '.json');
+app.use('/api/sessions', express.json({ limit: '30mb' }));
+
+app.get('/api/sessions', (req, res) => {
+  if (!fs.existsSync(SAVED_DIR)) return res.json([]);
+  const out = [];
+  for (const f of fs.readdirSync(SAVED_DIR).filter(f => f.endsWith('.json'))) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(SAVED_DIR, f), 'utf8'));
+      out.push({ name: j.name, savedAt: j.savedAt, apps: (j.yourApp ? 1 : 0) + (j.competitors || []).length, keywords: (j.chips || []).length });
+    } catch (_) {}
+  }
+  res.json(out.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt))));
+});
+app.get('/api/sessions/:name', (req, res) => {
+  const f = sessionFile(req.params.name);
+  if (!fs.existsSync(f)) return res.status(404).json({ error: 'not found' });
+  res.type('application/json').send(fs.readFileSync(f));
+});
+app.put('/api/sessions/:name', (req, res) => {
+  if (!req.body || typeof req.body !== 'object') return res.status(400).json({ error: 'bad body' });
+  fs.mkdirSync(SAVED_DIR, { recursive: true });
+  fs.writeFileSync(sessionFile(req.params.name), JSON.stringify({ ...req.body, name: req.params.name }));
+  console.log(`  ✓ session saved: ${req.params.name}`);
+  res.json({ ok: true });
+});
+app.delete('/api/sessions/:name', (req, res) => {
+  fs.rmSync(sessionFile(req.params.name), { force: true });
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {
