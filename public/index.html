@@ -208,7 +208,11 @@ table.kw-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-num
 .kw-row-refresh .ri{display:inline-block;width:1em;height:1em;line-height:1;text-align:center;transform-origin:50% 50%}
 .kw-row-refresh.spin{opacity:1;color:var(--accent);cursor:default}
 .kw-row-refresh.spin .ri{animation:kwspin .8s linear infinite}
-tr.kw-busy td{opacity:.55}
+tr.kw-busy td>*{opacity:.55}
+.kw-tbl th.stk,.kw-tbl td.stk{position:sticky;z-index:2}
+.kw-tbl td.stk{background:var(--surface)}
+.kw-tbl th.stk{z-index:3}
+.kw-tbl th.stk-last,.kw-tbl td.stk-last{box-shadow:3px 0 5px -3px rgba(0,0,0,.25)}
 @keyframes kwspin{to{transform:rotate(360deg)}}
 @keyframes kwp{0%,100%{opacity:.25}50%{opacity:.8}}
 .kw-loading{animation:kwp 1.1s ease-in-out infinite}
@@ -1456,6 +1460,15 @@ function createKeywordTable(apps, keywords, flags, state, onUpdate) {
     if(kwView.diff.length){ const d=metric.diff(s); if(d==null||!kwView.diff.includes(diffBand(d))) return false; }
     return true;
   };
+  // keep Keyword … Difficulty pinned on the left while the rest scrolls horizontally
+  const nStick=1+(hasVol?1:0)+1+(hasSoc?1:0)+(hasIOS?1:0);
+  const stick=()=>{
+    let left=0;
+    const lefts=[...tbl.querySelectorAll('thead th')].slice(0,nStick).map(h=>{ const l=left; left+=h.getBoundingClientRect().width; return l; });
+    tbl.querySelectorAll('tr').forEach(tr=>[...tr.children].slice(0,nStick).forEach((c,i)=>{
+      c.classList.add('stk'); c.classList.toggle('stk-last',i===nStick-1); c.style.left=lefts[i]+'px';
+    }));
+  };
   const applyView=()=>{
     let order=keys.slice();
     if(kwView.sort&&metric[kwView.sort]){
@@ -1464,6 +1477,7 @@ function createKeywordTable(apps, keywords, flags, state, onUpdate) {
     }
     let shown=0;
     for(const k of order){ tbody.appendChild(rows[k]); const ok=passes(state[k]); rows[k].style.display=ok?'':'none'; if(ok) shown++; }
+    stick();
     tbl.querySelectorAll('th.sortable').forEach(h=>{ h.querySelector('.arr').textContent=kwView.sort===h.dataset.sort?(kwView.dir==='asc'?'▲':'▼'):''; });
     const filtered=kwView.vol.length||kwView.trend.length||kwView.diff.length;
     bar.querySelector('#kwf-count').textContent=keys.length?(filtered?`Showing ${shown} of ${keys.length}`:`${keys.length} keyword${keys.length!==1?'s':''}`):'';
